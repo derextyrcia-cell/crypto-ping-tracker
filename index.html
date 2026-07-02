@@ -6,6 +6,7 @@
     <title>CryptoPulse</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <style>
         :root {
             --bg-primary: #0f1419;
@@ -662,7 +663,10 @@
     async function cgGet(endpoint, params = '') {
         if (!canRequest()) return null;
         try {
-            const res = await fetch(COINGECKO_API + endpoint + params, { timeout: 10000 });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(COINGECKO_API + endpoint + params, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (!res.ok) throw new Error('API Error ' + res.status);
             return await res.json();
         } catch(e) {
@@ -835,32 +839,107 @@
             </div>`;
 
         updateWatchlistButton();
-        if (isPremium) loadCoinChart(coinId);
+        if (isPremium) {
+            // Небольшая задержка, чтобы DOM точно обновился
+            setTimeout(() => loadCoinChart(coinId), 50);
+        }
         document.getElementById('coinModal').classList.add('active');
     }
 
     async function loadCoinChart(coinId, days = 7) {
         const data = await cgGet('/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days);
-        if (!data || !data.prices) return;
-        const prices = data.prices.map(p => ({ x: new Date(p[0]), y: p[1] }));
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: { datasets: [{ label: 'Цена', data: prices, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 6 }] },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                interaction: { intersect: false, mode: 'index' },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f1f5f9', bodyColor: '#f1f5f9', borderColor: '#334155', borderWidth: 1, callbacks: { label: (ctx) => '$' + formatPrice(ctx.parsed.y) } }
+        if (!data || !data.prices || !data.prices.length) {
+            console.error('No chart data');
+            return;
+        }
+
+        // Ждём появления canvas в DOM
+        const canvas = document.getElementById('priceChart');
+        if (!canvas) {
+            console.error('Canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.error('Cannot get 2d context');
+            return;
+        }
+
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+
+        // Форматируем данные: timestamp -> Date
+        const prices = data.prices.map(p => ({ x: p[0], y: p[1] }));
+
+        // Проверяем, загрузился ли адаптер даты
+        const hasTimeAdapter = Chart.registry && Chart.registry.plugins && Chart.registry.plugins.get('adapter-date-fns');
+        const xScaleType = hasTimeAdapter ? 'time' : 'linear';
+
+        try {
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { 
+                    datasets: [{ 
+                        label: 'Цена', 
+                        data: prices, 
+                        borderColor: '#3b82f6', 
+                        backgroundColor: 'rgba(59,130,246,0.1)', 
+                        fill: true, 
+                        tension: 0.4, 
+                        pointRadius: 0, 
+                        pointHoverRadius: 6 
+                    }] 
                 },
-                scales: {
-                    x: { type: 'time', time: { unit: days > 30 ? 'month' : 'day' }, grid: { color: '#334155', drawBorder: false }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: '#334155', drawBorder: false }, ticks: { color: '#94a3b8', callback: (v) => '$' + formatPrice(v) } }
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { 
+                            backgroundColor: '#1e293b', 
+                            titleColor: '#f1f5f9', 
+                            bodyColor: '#f1f5f9', 
+                            borderColor: '#334155', 
+                            borderWidth: 1,
+                            callbacks: { 
+                                title: (items) => {
+                                    const d = new Date(items[0].parsed.x);
+                                    return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+                                },
+                                label: (ctx) => '$' + formatPrice(ctx.parsed.y) 
+                            } 
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            type: xScaleType, 
+                            time: xScaleType === 'time' ? { unit: days > 30 ? 'month' : 'day', tooltipFormat: 'dd.MM.yyyy HH:mm' } : undefined,
+                            grid: { color: '#334155', drawBorder: false }, 
+                            ticks: { 
+                                color: '#94a3b8',
+                                maxTicksLimit: 6,
+                                callback: xScaleType === 'linear' ? function(value) {
+                                    const d = new Date(value);
+                                    return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'short'});
+                                } : undefined
+                            } 
+                        },
+                        y: { 
+                            grid: { color: '#334155', drawBorder: false }, 
+                            ticks: { color: '#94a3b8', callback: (v) => '$' + formatPrice(v) } 
+                        }
+                    }
                 }
-            }
-        });
+            });
+        } catch (e) {
+            console.error('Chart error:', e);
+            // Fallback: показываем текстовое сообщение вместо графика
+            canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График временно недоступен</div>';
+        }
     }
 
     function closeModal() {
