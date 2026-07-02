@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CryptoPulse</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a2332;
+            --bg-card: #1e293b;
+            --bg-hover: #273548;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --premium: #f59e0b;
+            --border: #334155;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .header {
+            background: var(--bg-secondary);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .premium-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            padding: 8px;
+            gap: 4px;
+            position: sticky;
+            top: 57px;
+            z-index: 99;
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-tab {
+            flex: 1;
+            padding: 10px 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .global-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .global-stat {
+            background: var(--bg-card);
+            padding: 14px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        .global-stat .label { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+        .global-stat .value { font-size: 16px; font-weight: 700; }
+        .global-stat .change { font-size: 12px; margin-top: 4px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .section-header h2 { font-size: 18px; font-weight: 700; }
+        .filters { display: flex; gap: 6px; }
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .coins-list { display: flex; flex-direction: column; gap: 8px; }
+        .coin-card {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .coin-card:hover { background: var(--bg-hover); border-color: var(--border); }
+        .coin-rank { font-size: 13px; color: var(--text-secondary); min-width: 28px; text-align: center; }
+        .coin-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .coin-icon img { width: 28px; height: 28px; }
+        .coin-info { flex: 1; min-width: 0; }
+        .coin-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+        .coin-symbol { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        .coin-price-section { text-align: right; }
+        .coin-price { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+        .coin-change {
+            font-size: 13px; font-weight: 600;
+            padding: 3px 8px; border-radius: 6px; display: inline-block;
+        }
+        .coin-change.positive { color: var(--success); background: rgba(34, 197, 94, 0.1); }
+        .coin-change.negative { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-box input {
+            flex: 1; padding: 14px 18px;
+            border: 1px solid var(--border); background: var(--bg-card);
+            color: var(--text-primary); border-radius: var(--radius);
+            font-size: 15px; outline: none; transition: border-color 0.2s;
+        }
+        .search-box input:focus { border-color: var(--accent); }
+        .search-box button {
+            padding: 14px 20px; background: var(--accent); border: none;
+            border-radius: var(--radius); color: white; font-size: 18px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .search-box button:hover { background: var(--accent-hover); }
+        .search-results { display: flex; flex-direction: column; gap: 8px; }
+        .premium-overlay { text-align: center; padding: 40px 20px; }
+        .premium-cta h3 { font-size: 22px; margin-bottom: 12px; }
+        .premium-cta p { color: var(--text-secondary); margin-bottom: 24px; font-size: 15px; }
+        .premium-features {
+            display: flex; flex-direction: column; gap: 10px;
+            margin-bottom: 28px; text-align: left;
+            max-width: 300px; margin-left: auto; margin-right: auto;
+        }
+        .feature {
+            background: var(--bg-card); padding: 12px 16px;
+            border-radius: var(--radius-sm); font-size: 14px;
+        }
+        .profile-card {
+            background: var(--bg-card); padding: 28px;
+            border-radius: var(--radius); text-align: center; margin-bottom: 16px;
+        }
+        .profile-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin: 0 auto 16px;
+        }
+        .profile-card h3 { font-size: 20px; margin-bottom: 4px; }
+        .profile-card p { color: var(--text-secondary); font-size: 14px; }
+        .status-card {
+            margin-top: 16px; padding: 14px;
+            background: var(--bg-secondary); border-radius: var(--radius-sm);
+        }
+        .status-badge {
+            display: inline-block; padding: 6px 16px;
+            border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 8px;
+        }
+        .status-badge.free { background: var(--bg-hover); color: var(--text-secondary); }
+        .status-badge.premium { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .status-text { font-size: 13px; color: var(--text-secondary); }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-card); padding: 20px;
+            border-radius: var(--radius); text-align: center;
+        }
+        .stat-value {
+            font-size: 28px; font-weight: 700; margin-bottom: 4px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label { font-size: 12px; color: var(--text-secondary); }
+        .premium-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            padding: 24px; border-radius: var(--radius);
+        }
+        .premium-section h3 { text-align: center; margin-bottom: 20px; font-size: 18px; }
+        .premium-plans {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; margin-bottom: 20px;
+        }
+        .plan-card {
+            background: var(--bg-card); padding: 20px;
+            border-radius: var(--radius); text-align: center;
+            cursor: pointer; transition: all 0.2s;
+            border: 2px solid transparent; position: relative;
+        }
+        .plan-card:hover, .plan-card.selected { border-color: var(--premium); }
+        .plan-card.popular { border-color: var(--premium); }
+        .plan-badge {
+            position: absolute; top: -10px; left: 50%;
+            transform: translateX(-50%); background: var(--premium);
+            color: white; padding: 4px 12px; border-radius: 12px;
+            font-size: 10px; font-weight: 700;
+        }
+        .plan-name { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+        .plan-price { font-size: 28px; font-weight: 700; }
+        .plan-period { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+        .plan-save { font-size: 11px; color: var(--success); font-weight: 600; }
+        .btn-premium {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white; border: none; padding: 14px 28px;
+            border-radius: var(--radius); font-size: 15px;
+            font-weight: 700; cursor: pointer; width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+        }
+        .btn-premium-large {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white; border: none; padding: 16px;
+            border-radius: var(--radius); font-size: 16px;
+            font-weight: 700; cursor: pointer; width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-premium-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        }
+        .modal {
+            display: none; position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8); z-index: 1000;
+            padding: 20px; overflow-y: auto;
+        }
+        .modal.active {
+            display: flex; align-items: flex-end;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius) var(--radius) 0 0;
+            width: 100%; max-width: 600px; margin: 0 auto;
+            max-height: 90vh; overflow-y: auto;
+            animation: slideUpContent 0.3s ease;
+        }
+        @keyframes slideUpContent {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-header {
+            display: flex; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; background: var(--bg-secondary); z-index: 10;
+        }
+        .modal-back {
+            background: none; border: none; color: var(--text-primary);
+            font-size: 24px; cursor: pointer; padding: 4px;
+        }
+        .modal-title {
+            flex: 1; text-align: center;
+            font-weight: 700; font-size: 16px;
+        }
+        .modal-action {
+            background: none; border: none;
+            color: var(--text-secondary); font-size: 20px;
+            cursor: pointer; padding: 4px;
+        }
+        .modal-action.active { color: var(--warning); }
+        .modal-body { padding: 20px; }
+        .modal-close {
+            position: absolute; top: 16px; right: 16px;
+            background: none; border: none;
+            color: var(--text-secondary); font-size: 20px; cursor: pointer;
+        }
+        .premium-modal { padding: 32px 24px; position: relative; }
+        .premium-modal h2 { text-align: center; margin-bottom: 28px; font-size: 22px; }
+        .premium-features-list {
+            display: flex; flex-direction: column;
+            gap: 16px; margin-bottom: 28px;
+        }
+        .feature-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px; background: var(--bg-card); border-radius: var(--radius);
+        }
+        .feature-icon { font-size: 28px; }
+        .feature-title { font-weight: 700; margin-bottom: 4px; }
+        .feature-desc { font-size: 13px; color: var(--text-secondary); }
+        .chart-container {
+            background: var(--bg-card); padding: 20px;
+            border-radius: var(--radius); margin-bottom: 20px; height: 300px;
+        }
+        .chart-premium-overlay { position: relative; }
+        .chart-blur { filter: blur(8px); opacity: 0.3; }
+        .chart-lock {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); text-align: center;
+        }
+        .chart-lock-icon { font-size: 48px; margin-bottom: 12px; }
+        .coin-detail-header {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+        }
+        .coin-detail-icon {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: var(--bg-card);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .coin-detail-icon img { width: 36px; height: 36px; }
+        .coin-detail-info h2 { font-size: 22px; margin-bottom: 4px; }
+        .coin-detail-info p { color: var(--text-secondary); font-size: 14px; }
+        .coin-detail-price { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .coin-detail-change {
+            display: inline-block; padding: 6px 14px;
+            border-radius: 8px; font-weight: 600; font-size: 14px;
+        }
+        .stats-row {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; margin-top: 20px;
+        }
+        .stat-box {
+            background: var(--bg-card); padding: 16px;
+            border-radius: var(--radius);
+        }
+        .stat-box .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+        .stat-box .value { font-size: 16px; font-weight: 700; }
+        .toast {
+            position: fixed; bottom: 80px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card); color: var(--text-primary);
+            padding: 14px 24px; border-radius: var(--radius);
+            font-size: 14px; font-weight: 600; z-index: 2000;
+            opacity: 0; transition: all 0.3s ease;
+            border: 1px solid var(--border); white-space: nowrap;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.success { border-color: var(--success); background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .toast.error { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .hidden { display: none !important; }
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        @media (max-width: 480px) {
+            .nav-tab { font-size: 11px; padding: 8px 4px; }
+            .coin-price { font-size: 13px; }
+            .global-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-content">
+                <h1>💎 CryptoPulse</h1>
+                <div class="user-badge" id="userBadge">
+                    <span id="premiumBadge" class="premium-badge hidden">PRO</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="market">📊 Рынок</button>
+            <button class="nav-tab" data-tab="search">🔍 Поиск</button>
+            <button class="nav-tab" data-tab="watchlist" id="watchlistTab">⭐ Избранное</button>
+            <button class="nav-tab" data-tab="profile">👤 Профиль</button>
+        </nav>
+
+        <div class="tab-content active" id="marketTab">
+            <div class="global-stats" id="globalStats"></div>
+            <div class="section-header">
+                <h2>🔥 Топ криптовалют</h2>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">Все</button>
+                    <button class="filter-btn" data-filter="gainers">Рост</button>
+                    <button class="filter-btn" data-filter="losers">Падение</button>
+                </div>
+            </div>
+            <div class="coins-list" id="coinsList">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="searchTab">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Поиск монеты..." autocomplete="off">
+                <button id="searchBtn">🔍</button>
+            </div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+
+        <div class="tab-content" id="watchlistTab">
+            <div class="premium-overlay" id="watchlistOverlay">
+                <div class="premium-cta">
+                    <h3>⭐ Избранное</h3>
+                    <p>Добавляй монеты в избранное и отслеживай их в одном месте</p>
+                    <div class="premium-features">
+                        <div class="feature">✅ До 50 монет в избранном</div>
+                        <div class="feature">✅ Быстрый доступ к ценам</div>
+                        <div class="feature">✅ Уведомления об изменениях</div>
+                    </div>
+                    <button class="btn-premium" onclick="showPremiumModal()">
+                        💎 Активировать Premium
+                    </button>
+                </div>
+            </div>
+            <div class="watchlist-content hidden" id="watchlistContent">
+                <div class="coins-list" id="watchlistList"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="profileTab">
+            <div class="profile-card">
+                <div class="profile-avatar" id="profileAvatar">👤</div>
+                <h3 id="profileName">Пользователь</h3>
+                <p id="profileUsername"></p>
+                <div class="status-card" id="statusCard">
+                    <div class="status-badge free" id="statusBadge">Бесплатный</div>
+                    <p class="status-text" id="statusText">10 запросов в день</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="dailyRequests">0</div>
+                    <div class="stat-label">Запросов сегодня</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="watchlistCount">0</div>
+                    <div class="stat-label">В избранном</div>
+                </div>
+            </div>
+
+            <div class="premium-section" id="premiumSection">
+                <h3>💎 CryptoPulse Premium</h3>
+                <div class="premium-plans">
+                    <div class="plan-card" onclick="selectPlan('monthly')">
+                        <div class="plan-name">📅 Месяц</div>
+                        <div class="plan-price">$2.99</div>
+                        <div class="plan-period">/месяц</div>
+                    </div>
+                    <div class="plan-card popular" onclick="selectPlan('yearly')">
+                        <div class="plan-badge">Выгодно</div>
+                        <div class="plan-name">📆 Год</div>
+                        <div class="plan-price">$24.99</div>
+                        <div class="plan-period">/год</div>
+                        <div class="plan-save">Экономия 30%</div>
+                    </div>
+                </div>
+                <button class="btn-premium-large" id="buyBtn" onclick="buyPremium()">
+                    💎 Оформить Premium
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="coinModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-back" onclick="closeModal()">←</button>
+                <div class="modal-title" id="modalTitle"></div>
+                <button class="modal-action" id="modalAction" onclick="toggleWatchlist()">⭐</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="premiumModal">
+        <div class="modal-content premium-modal">
+            <button class="modal-close" onclick="closePremiumModal()">✕</button>
+            <h2>💎 CryptoPulse Premium</h2>
+            <div class="premium-features-list">
+                <div class="feature-item">
+                    <span class="feature-icon">📈</span>
+                    <div>
+                        <div class="feature-title">Графики цен</div>
+                        <div class="feature-desc">Исторические данные за 7/30/90/365 дней</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">⭐</span>
+                    <div>
+                        <div class="feature-title">Избранное</div>
+                        <div class="feature-desc">До 50 монет с быстрым доступом</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔔</span>
+                    <div>
+                        <div class="feature-title">Уведомления</div>
+                        <div class="feature-desc">Оповещения о ценовых изменениях</div>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📤</span>
+                    <div>
+                        <div class="feature-title">Экспорт данных</div>
+                        <div class="feature-desc">CSV и JSON форматы</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-premium-large" onclick="buyPremium()">
+                Начать сейчас — от $2.99
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ==================== CONFIG ====================
+    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    let tg = window.Telegram ? window.Telegram.WebApp : null;
+    let currentCoin = null;
+    let selectedPlan = 'yearly';
+    let allCoins = [];
+    let chartInstance = null;
+
+    // ==================== STORAGE ====================
+    function getStorage(key, def) {
+        try { return JSON.parse(localStorage.getItem('cryptopulse_' + key)) || def; }
+        catch(e) { return def; }
+    }
+    function setStorage(key, val) { localStorage.setItem('cryptopulse_' + key, JSON.stringify(val)); }
+
+    let isPremium = getStorage('premium', false);
+    let premiumUntil = getStorage('premium_until', null);
+    let watchlist = getStorage('watchlist', []);
+    let dailyRequests = getStorage('daily_requests', 0);
+    let lastRequestDate = getStorage('last_request_date', null);
+
+    // Проверка срока премиума
+    if (premiumUntil && new Date(premiumUntil) < new Date()) {
+        isPremium = false;
+        setStorage('premium', false);
+    }
+
+    // Сброс счётчика запросов
+    const today = new Date().toDateString();
+    if (lastRequestDate !== today) {
+        dailyRequests = 0;
+        setStorage('daily_requests', 0);
+        setStorage('last_request_date', today);
+    }
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', () => {
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            tg.setHeaderColor('#0f1419');
+            tg.setBackgroundColor('#0f1419');
+        }
+        initNavigation();
+        initSearch();
+        loadGlobalStats();
+        loadTopCoins();
+        updateUI();
+
+        if (isPremium) enablePremiumFeatures();
+    });
+
+    // ==================== UI UPDATE ====================
+    function updateUI() {
+        const user = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+        document.getElementById('profileName').textContent = user ? (user.first_name || 'Пользователь') : 'Гость';
+        document.getElementById('profileUsername').textContent = user && user.username ? '@' + user.username : '';
+
+        if (isPremium) {
+            document.getElementById('premiumBadge').classList.remove('hidden');
+            document.getElementById('statusBadge').textContent = 'Premium';
+            document.getElementById('statusBadge').classList.remove('free');
+            document.getElementById('statusBadge').classList.add('premium');
+            document.getElementById('statusText').textContent = 'Безлимитные запросы';
+        }
+        document.getElementById('dailyRequests').textContent = dailyRequests;
+        document.getElementById('watchlistCount').textContent = watchlist.length;
+    }
+
+    // ==================== RATE LIMIT ====================
+    function canRequest() {
+        if (isPremium) return true;
+        if (dailyRequests >= 10) {
+            showToast('Лимит запросов исчерпан. Купи Premium!', 'error');
+            showPremiumModal();
+            return false;
+        }
+        dailyRequests++;
+        setStorage('daily_requests', dailyRequests);
+        document.getElementById('dailyRequests').textContent = dailyRequests;
+        return true;
+    }
+
+    // ==================== API ====================
+    async function cgGet(endpoint, params = '') {
+        if (!canRequest()) return null;
+        try {
+            const res = await fetch(COINGECKO_API + endpoint + params, { timeout: 10000 });
+            if (!res.ok) throw new Error('API Error ' + res.status);
+            return await res.json();
+        } catch(e) {
+            console.error(e);
+            showToast('Ошибка загрузки данных', 'error');
+            return null;
+        }
+    }
+
+    // ==================== NAVIGATION ====================
+    function initNavigation() {
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+        });
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterCoins(btn.dataset.filter);
+            });
+        });
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        if (tabName === 'watchlist' && isPremium) renderWatchlist();
+    }
+
+    // ==================== GLOBAL STATS ====================
+    async function loadGlobalStats() {
+        const data = await cgGet('/global');
+        if (!data || !data.data) return;
+        const g = data.data;
+        document.getElementById('globalStats').innerHTML = `
+            <div class="global-stat">
+                <div class="label">Капитализация</div>
+                <div class="value">$${formatNumber(g.total_market_cap.usd)}</div>
+                <div class="change ${g.market_cap_change_percentage_24h_usd >= 0 ? 'positive' : 'negative'}">
+                    ${g.market_cap_change_percentage_24h_usd >= 0 ? '+' : ''}${g.market_cap_change_percentage_24h_usd.toFixed(2)}%
+                </div>
+            </div>
+            <div class="global-stat">
+                <div class="label">Объём 24ч</div>
+                <div class="value">$${formatNumber(g.total_volume.usd)}</div>
+            </div>
+            <div class="global-stat">
+                <div class="label">Доминация BTC</div>
+                <div class="value">${g.market_cap_percentage.btc.toFixed(1)}%</div>
+            </div>`;
+    }
+
+    // ==================== TOP COINS ====================
+    async function loadTopCoins() {
+        const data = await cgGet('/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h');
+        if (!data) return;
+        allCoins = data;
+        renderCoins(allCoins);
+    }
+
+    function renderCoins(coins) {
+        const container = document.getElementById('coinsList');
+        if (!coins || !coins.length) { container.innerHTML = '<div class="loading">Нет данных</div>'; return; }
+        container.innerHTML = coins.map(c => `
+            <div class="coin-card" onclick="openCoinDetail('${c.id}')">
+                <div class="coin-rank">${c.market_cap_rank || '-'}</div>
+                <div class="coin-icon"><img src="${c.image}" alt="${c.name}" loading="lazy"></div>
+                <div class="coin-info">
+                    <div class="coin-name">${c.name}</div>
+                    <div class="coin-symbol">${c.symbol}</div>
+                </div>
+                <div class="coin-price-section">
+                    <div class="coin-price">$${formatPrice(c.current_price)}</div>
+                    <div class="coin-change ${c.price_change_percentage_24h >= 0 ? 'positive' : 'negative'}">
+                        ${c.price_change_percentage_24h >= 0 ? '+' : ''}${c.price_change_percentage_24h?.toFixed(2) || 0}%
+                    </div>
+                </div>
+            </div>`).join('');
+    }
+
+    function filterCoins(filter) {
+        if (!allCoins.length) return;
+        let filtered = [...allCoins];
+        if (filter === 'gainers') {
+            filtered = filtered.filter(c => c.price_change_percentage_24h > 0).sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+        } else if (filter === 'losers') {
+            filtered = filtered.filter(c => c.price_change_percentage_24h < 0).sort((a,b) => a.price_change_percentage_24h - b.price_change_percentage_24h);
+        }
+        renderCoins(filtered);
+    }
+
+    // ==================== SEARCH ====================
+    function initSearch() {
+        const input = document.getElementById('searchInput');
+        const btn = document.getElementById('searchBtn');
+        let timer;
+        input.addEventListener('input', () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { if (input.value.length > 1) searchCoins(input.value); }, 300);
+        });
+        btn.addEventListener('click', () => { if (input.value.length > 1) searchCoins(input.value); });
+    }
+
+    async function searchCoins(query) {
+        const data = await cgGet('/search?query=' + encodeURIComponent(query));
+        if (!data || !data.coins) return;
+        const container = document.getElementById('searchResults');
+        if (!data.coins.length) { container.innerHTML = '<div class="loading">Ничего не найдено</div>'; return; }
+        container.innerHTML = data.coins.slice(0, 10).map(c => `
+            <div class="coin-card" onclick="openCoinDetail('${c.id}')">
+                <div class="coin-icon"><img src="${c.thumb}" alt="${c.name}" loading="lazy"></div>
+                <div class="coin-info">
+                    <div class="coin-name">${c.name}</div>
+                    <div class="coin-symbol">${c.symbol}</div>
+                </div>
+                <div class="coin-price-section">
+                    <span style="color:var(--text-secondary);font-size:13px;">#${c.market_cap_rank || '-'}</span>
+                </div>
+            </div>`).join('');
+    }
+
+    // ==================== COIN DETAIL ====================
+    async function openCoinDetail(coinId) {
+        currentCoin = coinId;
+        const coin = await cgGet('/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false');
+        if (!coin) return;
+
+        document.getElementById('modalTitle').innerHTML = `
+            <img src="${coin.image.small}" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;border-radius:50%;">
+            ${coin.name}`;
+
+        const price = coin.market_data.current_price.usd;
+        const change24h = coin.market_data.price_change_percentage_24h;
+
+        let chartHtml = '';
+        if (isPremium) {
+            chartHtml = `<div class="chart-container"><canvas id="priceChart"></canvas></div>`;
+        } else {
+            chartHtml = `
+                <div class="chart-container chart-premium-overlay">
+                    <div class="chart-blur" style="height:100%;background:linear-gradient(180deg,var(--bg-hover),var(--bg-card));border-radius:8px;"></div>
+                    <div class="chart-lock">
+                        <div class="chart-lock-icon">🔒</div>
+                        <p style="color:var(--text-secondary);margin-bottom:12px;">Графики доступны в Premium</p>
+                        <button class="btn-premium" onclick="showPremiumModal()" style="width:auto;padding:10px 20px;font-size:13px;">💎 Активировать</button>
+                    </div>
+                </div>`;
+        }
+
+        document.getElementById('modalBody').innerHTML = `
+            <div class="coin-detail-header">
+                <div class="coin-detail-icon"><img src="${coin.image.large}" alt="${coin.name}"></div>
+                <div class="coin-detail-info">
+                    <h2>${coin.name}</h2>
+                    <p>${coin.symbol.toUpperCase()} • Rank #${coin.market_cap_rank}</p>
+                </div>
+            </div>
+            <div class="coin-detail-price">$${formatPrice(price)}</div>
+            <div class="coin-detail-change ${change24h >= 0 ? 'positive' : 'negative'}" style="background:${change24h >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}">
+                ${change24h >= 0 ? '+' : ''}${change24h?.toFixed(2) || 0}% (24ч)
+            </div>
+            ${chartHtml}
+            <div class="stats-row">
+                <div class="stat-box"><div class="label">Капитализация</div><div class="value">$${formatNumber(coin.market_data.market_cap.usd)}</div></div>
+                <div class="stat-box"><div class="label">Объём 24ч</div><div class="value">$${formatNumber(coin.market_data.total_volume.usd)}</div></div>
+                <div class="stat-box"><div class="label">Макс. цена</div><div class="value">$${formatPrice(coin.market_data.ath.usd)}</div></div>
+                <div class="stat-box"><div class="label">Циркуляция</div><div class="value">${formatNumber(coin.market_data.circulating_supply)} ${coin.symbol.toUpperCase()}</div></div>
+            </div>`;
+
+        updateWatchlistButton();
+        if (isPremium) loadCoinChart(coinId);
+        document.getElementById('coinModal').classList.add('active');
+    }
+
+    async function loadCoinChart(coinId, days = 7) {
+        const data = await cgGet('/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days);
+        if (!data || !data.prices) return;
+        const prices = data.prices.map(p => ({ x: new Date(p[0]), y: p[1] }));
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { datasets: [{ label: 'Цена', data: prices, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 6 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1e293b', titleColor: '#f1f5f9', bodyColor: '#f1f5f9', borderColor: '#334155', borderWidth: 1, callbacks: { label: (ctx) => '$' + formatPrice(ctx.parsed.y) } }
+                },
+                scales: {
+                    x: { type: 'time', time: { unit: days > 30 ? 'month' : 'day' }, grid: { color: '#334155', drawBorder: false }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#334155', drawBorder: false }, ticks: { color: '#94a3b8', callback: (v) => '$' + formatPrice(v) } }
+                }
+            }
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('coinModal').classList.remove('active');
+        currentCoin = null;
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    }
+
+    // ==================== WATCHLIST ====================
+    function enablePremiumFeatures() {
+        document.getElementById('watchlistOverlay').classList.add('hidden');
+        document.getElementById('watchlistContent').classList.remove('hidden');
+    }
+
+    function renderWatchlist() {
+        const container = document.getElementById('watchlistList');
+        if (!watchlist.length) { container.innerHTML = '<div class="loading">Избранное пусто. Добавь монеты!</div>'; return; }
+        // Загружаем актуальные данные для каждой монеты
+        Promise.all(watchlist.map(id => cgGet('/coins/' + id + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false'))).then(coins => {
+            const valid = coins.filter(c => c);
+            container.innerHTML = valid.map(coin => `
+                <div class="coin-card" onclick="openCoinDetail('${coin.id}')">
+                    <div class="coin-icon"><img src="${coin.image.small}" alt="${coin.name}" loading="lazy"></div>
+                    <div class="coin-info">
+                        <div class="coin-name">${coin.name}</div>
+                        <div class="coin-symbol">${coin.symbol}</div>
+                    </div>
+                    <div class="coin-price-section">
+                        <div class="coin-price">$${formatPrice(coin.market_data.current_price.usd)}</div>
+                        <div class="coin-change ${coin.market_data.price_change_percentage_24h >= 0 ? 'positive' : 'negative'}">
+                            ${coin.market_data.price_change_percentage_24h >= 0 ? '+' : ''}${coin.market_data.price_change_percentage_24h?.toFixed(2) || 0}%
+                        </div>
+                    </div>
+                </div>`).join('');
+        });
+    }
+
+    function toggleWatchlist() {
+        if (!currentCoin) return;
+        if (!isPremium) { showPremiumModal(); return; }
+        const idx = watchlist.indexOf(currentCoin);
+        if (idx >= 0) {
+            watchlist.splice(idx, 1);
+            showToast('Удалено из избранного', 'success');
+        } else {
+            if (watchlist.length >= 50) { showToast('Лимит 50 монет', 'error'); return; }
+            watchlist.push(currentCoin);
+            showToast('Добавлено в избранное', 'success');
+        }
+        setStorage('watchlist', watchlist);
+        updateWatchlistButton();
+        document.getElementById('watchlistCount').textContent = watchlist.length;
+        if (document.getElementById('watchlistTab').classList.contains('active')) renderWatchlist();
+    }
+
+    function updateWatchlistButton() {
+        const btn = document.getElementById('modalAction');
+        btn.classList.toggle('active', watchlist.includes(currentCoin));
+    }
+
+    // ==================== PREMIUM ====================
+    function showPremiumModal() { document.getElementById('premiumModal').classList.add('active'); }
+    function closePremiumModal() { document.getElementById('premiumModal').classList.remove('active'); }
+
+    function selectPlan(plan) {
+        selectedPlan = plan;
+        document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+    }
+
+    function buyPremium() {
+        // Демо-активация (в продакшене здесь будет tg.openInvoice)
+        const days = selectedPlan === 'yearly' ? 365 : 30;
+        const until = new Date();
+        until.setDate(until.getDate() + days);
+        isPremium = true;
+        premiumUntil = until.toISOString();
+        setStorage('premium', true);
+        setStorage('premium_until', premiumUntil);
+        enablePremiumFeatures();
+        updateUI();
+        closePremiumModal();
+        showToast('Premium активирован! (Демо-режим)', 'success');
+
+        // В продакшене раскомментировать:
+        // if (tg) tg.openInvoice('premium_' + selectedPlan, (status) => { if (status === 'paid') { ... } });
+    }
+
+    // ==================== UTILS ====================
+    function formatPrice(price) {
+        if (!price) return '0.00';
+        if (price >= 1) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return price.toFixed(6);
+    }
+    function formatNumber(num) {
+        if (!num) return '0';
+        if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+        if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+        return num.toLocaleString();
+    }
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + (type || 'info') + ' show';
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Закрытие модалок по клику вне
+    document.getElementById('coinModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+    document.getElementById('premiumModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePremiumModal(); });
+    </script>
+</body>
+</html>
