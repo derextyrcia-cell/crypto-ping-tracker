@@ -256,7 +256,8 @@
             border: 2px solid transparent; position: relative;
         }
         .plan-card:hover, .plan-card.selected { border-color: var(--premium); }
-        .plan-card.popular { border-color: var(--premium); }
+        .plan-card.popular { position: relative; }
+        .plan-card.selected { border-color: var(--premium); }
         .plan-badge {
             position: absolute; top: -10px; left: 50%;
             transform: translateX(-50%); background: var(--premium);
@@ -507,7 +508,7 @@
                         <div class="plan-price">$2.99</div>
                         <div class="plan-period">/месяц</div>
                     </div>
-                    <div class="plan-card popular" onclick="selectPlan('yearly')">
+                    <div class="plan-card popular selected" onclick="selectPlan('yearly')">
                         <div class="plan-badge">Выгодно</div>
                         <div class="plan-name">📆 Год</div>
                         <div class="plan-price">$24.99</div>
@@ -643,6 +644,19 @@
         }
         document.getElementById('dailyRequests').textContent = dailyRequests;
         document.getElementById('watchlistCount').textContent = watchlist.length;
+        updatePremiumButtonState();
+    }
+
+    function updatePremiumButtonState() {
+        const btn = document.getElementById('buyBtn');
+        if (!btn) return;
+        if (isPremium) {
+            btn.textContent = '✅ Premium активен';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            btn.onclick = function() { showToast('Premium уже активен!', 'error'); };
+        }
     }
 
     // ==================== RATE LIMIT ====================
@@ -952,6 +966,7 @@
     function enablePremiumFeatures() {
         document.getElementById('watchlistOverlay').classList.add('hidden');
         document.getElementById('watchlistContent').classList.remove('hidden');
+        updatePremiumButtonState();
     }
 
     function renderWatchlist() {
@@ -1007,10 +1022,16 @@
     function selectPlan(plan) {
         selectedPlan = plan;
         document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-        event.currentTarget.classList.add('selected');
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('selected');
+        }
     }
 
     function buyPremium() {
+        if (isPremium) {
+            showToast('Premium уже активен!', 'error');
+            return;
+        }
         // Демо-активация (в продакшене здесь будет tg.openInvoice)
         const days = selectedPlan === 'yearly' ? 365 : 30;
         const until = new Date();
@@ -1022,6 +1043,7 @@
         enablePremiumFeatures();
         updateUI();
         closePremiumModal();
+        updatePremiumButtonState();
         showToast('Premium активирован! (Демо-режим)', 'success');
 
         // В продакшене раскомментировать:
