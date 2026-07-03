@@ -6,7 +6,6 @@
     <title>CryptoPulse</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <style>
         :root {
             --bg-primary: #0f1419;
@@ -579,11 +578,29 @@
     <script>
     // ==================== CONFIG ====================
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    const API_KEY = ''; // CoinGecko не требует ключ для базового использования
     let tg = window.Telegram ? window.Telegram.WebApp : null;
     let currentCoin = null;
     let selectedPlan = 'yearly';
     let allCoins = [];
     let chartInstance = null;
+
+    // ==================== CACHE ====================
+    const CACHE_TTL = 60 * 1000; // 60 секунд кэш
+    let apiCache = {};
+
+    function getCache(key) {
+        const item = apiCache[key];
+        if (!item) return null;
+        if (Date.now() - item.time > CACHE_TTL) {
+            delete apiCache[key];
+            return null;
+        }
+        return item.data;
+    }
+    function setCache(key, data) {
+        apiCache[key] = { time: Date.now(), data: data };
+    }
 
     // ==================== STORAGE ====================
     function getStorage(key, def) {
@@ -674,15 +691,26 @@
     }
 
     // ==================== API ====================
-    async function cgGet(endpoint, params = '') {
+    async function cgGet(endpoint, useCache = true) {
         if (!canRequest()) return null;
+
+        const url = COINGECKO_API + endpoint;
+        const cacheKey = url;
+
+        if (useCache) {
+            const cached = getCache(cacheKey);
+            if (cached) return cached;
+        }
+
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            const res = await fetch(COINGECKO_API + endpoint + params, { signal: controller.signal });
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
             if (!res.ok) throw new Error('API Error ' + res.status);
-            return await res.json();
+            const data = await res.json();
+            setCache(cacheKey, data);
+            return data;
         } catch(e) {
             console.error(e);
             showToast('Ошибка загрузки данных', 'error');
@@ -709,14 +737,24 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
         document.getElementById(tabName + 'Tab').classList.add('active');
-        if (tabName === 'watchlist' && isPremium) renderWatchlist();
+        if (tabName === 'watchlist') {
+            if (isPremium) {
+                document.getElementById('watchlistOverlay').classList.add('hidden');
+                document.getElementById('watchlistContent').classList.remove('hidden');
+                renderWatchlist();
+            } else {
+                document.getElementById('watchlistOverlay').classList.remove('hidden');
+                document.getElementById('watchlistContent').classList.add('hidden');
+            }
+        }
     }
 
     // ==================== GLOBAL STATS ====================
     async function loadGlobalStats() {
-        const data = await cgGet('/global');
+        const data = await cgGet('/global', true);
         if (!data || !data.data) return;
         const g = data.data;
+
         document.getElementById('globalStats').innerHTML = `
             <div class="global-stat">
                 <div class="label">Капитализация</div>
@@ -737,7 +775,7 @@
 
     // ==================== TOP COINS ====================
     async function loadTopCoins() {
-        const data = await cgGet('/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h');
+        const data = await cgGet('/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h', true);
         if (!data) return;
         allCoins = data;
         renderCoins(allCoins);
@@ -787,7 +825,7 @@
     }
 
     async function searchCoins(query) {
-        const data = await cgGet('/search?query=' + encodeURIComponent(query));
+        const data = await cgGet('/search?query=' + encodeURIComponent(query), false);
         if (!data || !data.coins) return;
         const container = document.getElementById('searchResults');
         if (!data.coins.length) { container.innerHTML = '<div class="loading">Ничего не найдено</div>'; return; }
@@ -807,7 +845,7 @@
     // ==================== COIN DETAIL ====================
     async function openCoinDetail(coinId) {
         currentCoin = coinId;
-        const coin = await cgGet('/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false');
+        const coin = await cgGet('/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', false);
         if (!coin) return;
 
         document.getElementById('modalTitle').innerHTML = `
@@ -854,43 +892,26 @@
 
         updateWatchlistButton();
         if (isPremium) {
-            // Небольшая задержка, чтобы DOM точно обновился
             setTimeout(() => loadCoinChart(coinId), 50);
         }
         document.getElementById('coinModal').classList.add('active');
     }
 
     async function loadCoinChart(coinId, days = 7) {
-        const data = await cgGet('/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days);
+        const data = await cgGet('/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days, false);
         if (!data || !data.prices || !data.prices.length) {
             console.error('No chart data');
             return;
         }
 
-        // Ждём появления canvas в DOM
         const canvas = document.getElementById('priceChart');
-        if (!canvas) {
-            console.error('Canvas not found');
-            return;
-        }
-
+        if (!canvas) { console.error('Canvas not found'); return; }
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            console.error('Cannot get 2d context');
-            return;
-        }
+        if (!ctx) { console.error('Cannot get 2d context'); return; }
 
-        if (chartInstance) {
-            chartInstance.destroy();
-            chartInstance = null;
-        }
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
-        // Форматируем данные: timestamp -> Date
         const prices = data.prices.map(p => ({ x: p[0], y: p[1] }));
-
-        // Проверяем, загрузился ли адаптер даты
-        const hasTimeAdapter = Chart.registry && Chart.registry.plugins && Chart.registry.plugins.get('adapter-date-fns');
-        const xScaleType = hasTimeAdapter ? 'time' : 'linear';
 
         try {
             chartInstance = new Chart(ctx, {
@@ -930,16 +951,15 @@
                     },
                     scales: {
                         x: { 
-                            type: xScaleType, 
-                            time: xScaleType === 'time' ? { unit: days > 30 ? 'month' : 'day', tooltipFormat: 'dd.MM.yyyy HH:mm' } : undefined,
+                            type: 'linear',
                             grid: { color: '#334155', drawBorder: false }, 
                             ticks: { 
                                 color: '#94a3b8',
                                 maxTicksLimit: 6,
-                                callback: xScaleType === 'linear' ? function(value) {
+                                callback: function(value) {
                                     const d = new Date(value);
                                     return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'short'});
-                                } : undefined
+                                }
                             } 
                         },
                         y: { 
@@ -951,7 +971,6 @@
             });
         } catch (e) {
             console.error('Chart error:', e);
-            // Fallback: показываем текстовое сообщение вместо графика
             canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График временно недоступен</div>';
         }
     }
@@ -967,43 +986,92 @@
         document.getElementById('watchlistOverlay').classList.add('hidden');
         document.getElementById('watchlistContent').classList.remove('hidden');
         updatePremiumButtonState();
+        // Если вкладка избранного активна, перерендерим
+        if (document.getElementById('watchlistTab').classList.contains('active')) {
+            renderWatchlist();
+        }
     }
 
     function renderWatchlist() {
         const container = document.getElementById('watchlistList');
-        if (!watchlist.length) { container.innerHTML = '<div class="loading">Избранное пусто. Добавь монеты!</div>'; return; }
-        // Загружаем актуальные данные для каждой монеты
-        Promise.all(watchlist.map(id => cgGet('/coins/' + id + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false'))).then(coins => {
-            const valid = coins.filter(c => c);
-            container.innerHTML = valid.map(coin => `
-                <div class="coin-card" onclick="openCoinDetail('${coin.id}')">
-                    <div class="coin-icon"><img src="${coin.image.small}" alt="${coin.name}" loading="lazy"></div>
-                    <div class="coin-info">
-                        <div class="coin-name">${coin.name}</div>
-                        <div class="coin-symbol">${coin.symbol}</div>
-                    </div>
-                    <div class="coin-price-section">
-                        <div class="coin-price">$${formatPrice(coin.market_data.current_price.usd)}</div>
-                        <div class="coin-change ${coin.market_data.price_change_percentage_24h >= 0 ? 'positive' : 'negative'}">
-                            ${coin.market_data.price_change_percentage_24h >= 0 ? '+' : ''}${coin.market_data.price_change_percentage_24h?.toFixed(2) || 0}%
-                        </div>
-                    </div>
-                </div>`).join('');
+
+        if (!watchlist || !watchlist.length) { 
+            container.innerHTML = '<div class="loading">Избранное пусто. Добавь монеты из поиска или рынка!</div>'; 
+            return; 
+        }
+
+        container.innerHTML = '<div class="loading">Загрузка ' + watchlist.length + ' монет...</div>';
+
+        // Проверяем каждую монету отдельно с обработкой ошибок
+        let loadedCoins = [];
+        let errors = [];
+        let completed = 0;
+
+        function checkComplete() {
+            completed++;
+            if (completed >= watchlist.length) {
+                if (loadedCoins.length > 0) {
+                    container.innerHTML = loadedCoins.map(coin => {
+                        const price = coin.market_data?.current_price?.usd || 0;
+                        const change = coin.market_data?.price_change_percentage_24h || 0;
+                        const img = coin.image?.small || '';
+                        const sym = (coin.symbol || '?').charAt(0).toUpperCase();
+
+                        return `<div class="coin-card" onclick="openCoinDetail('${coin.id}')">
+                            <div class="coin-icon">${img ? `<img src="${img}" alt="${coin.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${sym}'">` : `<span style="font-size:20px;">${sym}</span>`}</div>
+                            <div class="coin-info">
+                                <div class="coin-name">${coin.name || 'Unknown'}</div>
+                                <div class="coin-symbol">${coin.symbol || '?'}</div>
+                            </div>
+                            <div class="coin-price-section">
+                                <div class="coin-price">$${formatPrice(price)}</div>
+                                <div class="coin-change ${change >= 0 ? 'positive' : 'negative'}">
+                                    ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    if (errors.length > 0) {
+                        showToast('Загружено ' + loadedCoins.length + ' из ' + watchlist.length, 'error');
+                    }
+                } else {
+                    container.innerHTML = '<div class="loading">Ошибка загрузки: ' + errors.join(', ') + '</div>';
+                }
+            }
+        }
+
+        watchlist.forEach(id => {
+            cgGet('/coins/' + id + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', false)
+                .then(coin => {
+                    if (coin && coin.id) {
+                        loadedCoins.push(coin);
+                    } else {
+                        errors.push(id + ': нет данных');
+                    }
+                    checkComplete();
+                })
+                .catch(err => {
+                    errors.push(id + ': ' + (err.message || 'ошибка'));
+                    checkComplete();
+                });
         });
     }
 
     function toggleWatchlist() {
-        if (!currentCoin) return;
+        if (!currentCoin) { showToast('Ошибка: нет выбранной монеты', 'error'); return; }
         if (!isPremium) { showPremiumModal(); return; }
+
         const idx = watchlist.indexOf(currentCoin);
         if (idx >= 0) {
             watchlist.splice(idx, 1);
-            showToast('Удалено из избранного', 'success');
+            showToast('Удалено: ' + currentCoin, 'success');
         } else {
             if (watchlist.length >= 50) { showToast('Лимит 50 монет', 'error'); return; }
             watchlist.push(currentCoin);
-            showToast('Добавлено в избранное', 'success');
+            showToast('Добавлено: ' + currentCoin + ' (всего: ' + watchlist.length + ')', 'success');
         }
+
         setStorage('watchlist', watchlist);
         updateWatchlistButton();
         document.getElementById('watchlistCount').textContent = watchlist.length;
