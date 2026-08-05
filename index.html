@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    
-    <!-- Важно для Telegram Mini App -->
+
     <meta name="telegram-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
+
     <title>CryptoPulse</title>
-    
-    <!-- Telegram Web App JS -->
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <style>
         :root {
             --bg-primary: #0f1419;
@@ -33,14 +30,14 @@
             --radius: 12px;
             --radius-sm: 8px;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-primary);
@@ -49,7 +46,7 @@
             overflow-x: hidden;
             padding-bottom: env(safe-area-inset-bottom);
         }
-        
+
         .header {
             background: var(--bg-secondary);
             padding: 16px 20px;
@@ -58,7 +55,7 @@
             top: 0;
             z-index: 100;
         }
-        
+
         .header-content {
             display: flex;
             justify-content: space-between;
@@ -66,7 +63,7 @@
             max-width: 600px;
             margin: 0 auto;
         }
-        
+
         .header h1 {
             font-size: 20px;
             font-weight: 700;
@@ -74,7 +71,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
+
         .watchlist-count-badge {
             background: var(--accent);
             color: white;
@@ -83,7 +80,7 @@
             font-size: 12px;
             font-weight: 700;
         }
-        
+
         .nav-tabs {
             display: flex;
             background: var(--bg-secondary);
@@ -94,7 +91,7 @@
             z-index: 99;
             border-bottom: 1px solid var(--border);
         }
-        
+
         .nav-tab {
             flex: 1;
             padding: 10px 8px;
@@ -108,12 +105,12 @@
             transition: all 0.2s;
             white-space: nowrap;
         }
-        
+
         .nav-tab.active {
             background: var(--accent);
             color: white;
         }
-        
+
         .tab-content {
             display: none;
             padding: 16px;
@@ -121,69 +118,63 @@
             margin: 0 auto;
             animation: fadeIn 0.3s ease;
         }
-        
+
         .tab-content.active {
             display: block;
         }
-        
+
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .global-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         .global-stat {
             background: var(--bg-card);
             padding: 14px;
             border-radius: var(--radius);
             text-align: center;
         }
-        
+
         .global-stat .label {
             font-size: 11px;
             color: var(--text-secondary);
             margin-bottom: 6px;
         }
-        
+
         .global-stat .value {
             font-size: 16px;
             font-weight: 700;
         }
-        
+
         .global-stat .change {
             font-size: 12px;
             margin-top: 4px;
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
-        
+
         .section-header h2 {
             font-size: 18px;
             font-weight: 700;
         }
-        
+
         .filters {
             display: flex;
             gap: 6px;
         }
-        
+
         .filter-btn {
             padding: 6px 14px;
             border: 1px solid var(--border);
@@ -195,19 +186,19 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .filter-btn.active {
             background: var(--accent);
             color: white;
             border-color: var(--accent);
         }
-        
+
         .coins-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        
+
         .coin-card {
             background: var(--bg-card);
             padding: 16px;
@@ -218,19 +209,19 @@
             transition: all 0.2s;
             border: 1px solid transparent;
         }
-        
+
         .coin-card:hover {
             background: var(--bg-hover);
             border-color: var(--border);
         }
-        
+
         .coin-rank {
             font-size: 13px;
             color: var(--text-secondary);
             min-width: 28px;
             text-align: center;
         }
-        
+
         .coin-icon {
             width: 40px;
             height: 40px;
@@ -242,41 +233,41 @@
             font-size: 20px;
             flex-shrink: 0;
         }
-        
+
         .coin-icon img {
             width: 28px;
             height: 28px;
         }
-        
+
         .coin-info {
             flex: 1;
             min-width: 0;
             cursor: pointer;
         }
-        
+
         .coin-name {
             font-weight: 700;
             font-size: 15px;
             margin-bottom: 2px;
         }
-        
+
         .coin-symbol {
             font-size: 12px;
             color: var(--text-secondary);
             text-transform: uppercase;
         }
-        
+
         .coin-price-section {
             text-align: right;
             cursor: pointer;
         }
-        
+
         .coin-price {
             font-weight: 700;
             font-size: 15px;
             margin-bottom: 4px;
         }
-        
+
         .coin-change {
             font-size: 13px;
             font-weight: 600;
@@ -284,17 +275,17 @@
             border-radius: 6px;
             display: inline-block;
         }
-        
+
         .coin-change.positive {
             color: var(--success);
             background: rgba(34, 197, 94, 0.1);
         }
-        
+
         .coin-change.negative {
             color: var(--danger);
             background: rgba(239, 68, 68, 0.1);
         }
-        
+
         .watchlist-btn {
             background: none;
             border: none;
@@ -306,21 +297,21 @@
             transition: all 0.2s;
             line-height: 1;
         }
-        
+
         .watchlist-btn:hover {
             background: var(--bg-hover);
         }
-        
+
         .watchlist-btn.in-watchlist {
             color: #f59e0b;
         }
-        
+
         .search-box {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         .search-box input {
             flex: 1;
             padding: 14px 18px;
@@ -332,11 +323,11 @@
             outline: none;
             transition: border-color 0.2s;
         }
-        
+
         .search-box input:focus {
             border-color: var(--accent);
         }
-        
+
         .search-box button {
             padding: 14px 20px;
             background: var(--accent);
@@ -347,17 +338,17 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        
+
         .search-box button:hover {
             background: var(--accent-hover);
         }
-        
+
         .search-results {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        
+
         .profile-card {
             background: var(--bg-card);
             padding: 28px;
@@ -365,7 +356,7 @@
             text-align: center;
             margin-bottom: 16px;
         }
-        
+
         .profile-avatar {
             width: 72px;
             height: 72px;
@@ -377,31 +368,31 @@
             font-size: 32px;
             margin: 0 auto 16px;
         }
-        
+
         .profile-card h3 {
             font-size: 20px;
             margin-bottom: 4px;
         }
-        
+
         .profile-card p {
             color: var(--text-secondary);
             font-size: 14px;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             margin-bottom: 20px;
         }
-        
+
         .stat-card {
             background: var(--bg-card);
             padding: 20px;
             border-radius: var(--radius);
             text-align: center;
         }
-        
+
         .stat-value {
             font-size: 28px;
             font-weight: 700;
@@ -410,12 +401,12 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
+
         .stat-label {
             font-size: 12px;
             color: var(--text-secondary);
         }
-        
+
         .modal {
             display: none;
             position: fixed;
@@ -428,22 +419,18 @@
             padding: 20px;
             overflow-y: auto;
         }
-        
+
         .modal.active {
             display: flex;
             align-items: flex-end;
             animation: slideUp 0.3s ease;
         }
-        
+
         @keyframes slideUp {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        
+
         .modal-content {
             background: var(--bg-secondary);
             border-radius: var(--radius) var(--radius) 0 0;
@@ -454,16 +441,12 @@
             overflow-y: auto;
             animation: slideUpContent 0.3s ease;
         }
-        
+
         @keyframes slideUpContent {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
-        
+
         .modal-header {
             display: flex;
             align-items: center;
@@ -474,7 +457,7 @@
             background: var(--bg-secondary);
             z-index: 10;
         }
-        
+
         .modal-back {
             background: none;
             border: none;
@@ -483,14 +466,14 @@
             cursor: pointer;
             padding: 4px;
         }
-        
+
         .modal-title {
             flex: 1;
             text-align: center;
             font-weight: 700;
             font-size: 16px;
         }
-        
+
         .modal-action {
             background: none;
             border: none;
@@ -499,15 +482,15 @@
             cursor: pointer;
             padding: 4px;
         }
-        
+
         .modal-action.active {
             color: #f59e0b;
         }
-        
+
         .modal-body {
             padding: 20px;
         }
-        
+
         .chart-container {
             background: var(--bg-card);
             padding: 20px;
@@ -515,14 +498,14 @@
             margin-bottom: 20px;
             height: 300px;
         }
-        
+
         .coin-detail-header {
             display: flex;
             align-items: center;
             gap: 16px;
             margin-bottom: 24px;
         }
-        
+
         .coin-detail-icon {
             width: 56px;
             height: 56px;
@@ -532,28 +515,28 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .coin-detail-icon img {
             width: 36px;
             height: 36px;
         }
-        
+
         .coin-detail-info h2 {
             font-size: 22px;
             margin-bottom: 4px;
         }
-        
+
         .coin-detail-info p {
             color: var(--text-secondary);
             font-size: 14px;
         }
-        
+
         .coin-detail-price {
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 8px;
         }
-        
+
         .coin-detail-change {
             display: inline-block;
             padding: 6px 14px;
@@ -561,31 +544,31 @@
             font-weight: 600;
             font-size: 14px;
         }
-        
+
         .stats-row {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             margin-top: 20px;
         }
-        
+
         .stat-box {
             background: var(--bg-card);
             padding: 16px;
             border-radius: var(--radius);
         }
-        
+
         .stat-box .label {
             font-size: 12px;
             color: var(--text-secondary);
             margin-bottom: 6px;
         }
-        
+
         .stat-box .value {
             font-size: 16px;
             font-weight: 700;
         }
-        
+
         .toast {
             position: fixed;
             bottom: 80px;
@@ -603,71 +586,66 @@
             border: 1px solid var(--border);
             white-space: nowrap;
         }
-        
+
         .toast.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
-        
+
         .toast.success {
             border-color: var(--success);
             background: rgba(34, 197, 94, 0.1);
             color: var(--success);
         }
-        
+
         .toast.error {
             border-color: var(--danger);
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
         }
-        
+
         .loading {
             text-align: center;
             padding: 40px;
             color: var(--text-secondary);
         }
-        
+
         .hidden {
             display: none !important;
         }
-        
-        .positive {
-            color: var(--success);
-        }
-        
-        .negative {
-            color: var(--danger);
-        }
-        
+
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: var(--text-secondary);
         }
-        
+
         .empty-state .empty-icon {
             font-size: 48px;
             margin-bottom: 16px;
         }
-        
+
         .empty-state h3 {
             margin-bottom: 8px;
             color: var(--text-primary);
         }
-        
+
         ::-webkit-scrollbar {
             width: 6px;
         }
-        
+
         ::-webkit-scrollbar-track {
             background: var(--bg-primary);
         }
-        
+
         ::-webkit-scrollbar-thumb {
             background: var(--border);
             border-radius: 3px;
         }
-        
+
         @media (max-width: 480px) {
             .nav-tab {
                 font-size: 11px;
@@ -681,10 +659,10 @@
             }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <div id="app">
-        <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <h1>💎 CryptoPulse</h1>
@@ -692,7 +670,6 @@
             </div>
         </header>
 
-        <!-- Navigation -->
         <nav class="nav-tabs">
             <button class="nav-tab active" data-tab="market">📊 Рынок</button>
             <button class="nav-tab" data-tab="search">🔍 Поиск</button>
@@ -700,12 +677,9 @@
             <button class="nav-tab" data-tab="profile">👤 Профиль</button>
         </nav>
 
-        <!-- Market Tab -->
         <div class="tab-content active" id="marketTab">
             <div class="global-stats" id="globalStats">
-                <div class="global-stat">
-                    <div class="label">Загрузка...</div>
-                </div>
+                <div class="global-stat"><div class="label">Загрузка...</div></div>
             </div>
             <div class="section-header">
                 <h2>🔥 Топ криптовалют</h2>
@@ -720,7 +694,6 @@
             </div>
         </div>
 
-        <!-- Search Tab -->
         <div class="tab-content" id="searchTab">
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Поиск монеты..." autocomplete="off">
@@ -729,7 +702,6 @@
             <div class="search-results" id="searchResults"></div>
         </div>
 
-        <!-- Watchlist Tab -->
         <div class="tab-content" id="watchlistTab">
             <div class="section-header">
                 <h2>⭐ Избранное</h2>
@@ -740,7 +712,6 @@
             </div>
         </div>
 
-        <!-- Profile Tab -->
         <div class="tab-content" id="profileTab">
             <div class="profile-card">
                 <div class="profile-avatar" id="profileAvatar">👤</div>
@@ -760,7 +731,6 @@
         </div>
     </div>
 
-    <!-- Coin Detail Modal -->
     <div class="modal" id="coinModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -774,14 +744,11 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
-    // ==================== КОНФИГУРАЦИЯ ====================
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-    
-    // Инициализация Telegram Web App
+
     let tg = null;
     try {
         if (window.Telegram && window.Telegram.WebApp) {
@@ -790,22 +757,19 @@
             tg.expand();
             tg.setHeaderColor('#0f1419');
             tg.setBackgroundColor('#0f1419');
-            
-            // Отключаем вертикальные свайпы для закрытия
             tg.enableClosingConfirmation();
         }
     } catch (e) {
         console.log('Telegram WebApp not available');
     }
-    
-    // Состояние приложения
+
     let currentCoinId = null;
     let currentCoinData = null;
     let allCoins = [];
     let chartInstance = null;
+    let chartLoadTimeout = null;
 
-    // ==================== КЭШ ====================
-    const CACHE_TTL = 60 * 1000; // 60 секунд
+    const CACHE_TTL = 60 * 1000;
     let apiCache = {};
 
     function getCache(key) {
@@ -822,7 +786,6 @@
         apiCache[key] = { time: Date.now(), data: data };
     }
 
-    // ==================== ХРАНИЛИЩЕ ====================
     function getStorage(key, def) {
         try {
             const value = localStorage.getItem('cryptopulse_' + key);
@@ -840,12 +803,10 @@
         }
     }
 
-    // Инициализация данных из хранилища
     let watchlist = getStorage('watchlist', []);
     let dailyRequests = getStorage('daily_requests', 0);
     let lastRequestDate = getStorage('last_request_date', null);
 
-    // Сброс счетчика запросов при новом дне
     const today = new Date().toDateString();
     if (lastRequestDate !== today) {
         dailyRequests = 0;
@@ -853,11 +814,10 @@
         setStorage('last_request_date', today);
     }
 
-    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
     document.addEventListener('DOMContentLoaded', () => {
         console.log('App initialized');
         console.log('Watchlist from storage:', watchlist);
-        
+
         initNavigation();
         initSearch();
         loadGlobalStats();
@@ -865,7 +825,6 @@
         updateAllUI();
     });
 
-    // ==================== ОБНОВЛЕНИЕ UI ====================
     function updateAllUI() {
         updateWatchlistCounters();
         updateProfileUI();
@@ -875,7 +834,6 @@
         const count = watchlist.length;
         document.getElementById('headerWatchlistCount').textContent = '⭐ ' + count;
         document.getElementById('watchlistCount').textContent = count;
-        console.log('Watchlist counters updated:', count);
     }
 
     function updateProfileUI() {
@@ -894,9 +852,7 @@
         }
     }
 
-    // ==================== НАВИГАЦИЯ ====================
     function initNavigation() {
-        // Переключение вкладок
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
@@ -904,7 +860,6 @@
             });
         });
 
-        // Фильтры рынка
         document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
@@ -915,32 +870,27 @@
     }
 
     function switchTab(tabName) {
-        console.log('Switching to tab:', tabName);
-        
-        // Обновляем активную вкладку
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        
+
         const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
         const tabContent = document.getElementById(tabName + 'Tab');
-        
+
         if (tabButton) tabButton.classList.add('active');
         if (tabContent) tabContent.classList.add('active');
-        
-        // Загружаем данные для вкладки
+
         if (tabName === 'watchlist') {
             loadWatchlist();
         }
     }
 
-    // ==================== API ЗАПРОСЫ ====================
     function incrementRequestCount() {
         dailyRequests++;
         setStorage('daily_requests', dailyRequests);
         document.getElementById('totalRequests').textContent = dailyRequests;
     }
 
-    async function cgGet(endpoint, useCache = true) {
+    async function cgGet(endpoint, useCache = true, retries = 1) {
         const url = COINGECKO_API + endpoint;
         const cacheKey = url;
 
@@ -960,7 +910,13 @@
             clearTimeout(timeoutId);
 
             if (res.status === 429) {
-                showToast('Слишком много запросов. Подождите.', 'error');
+                if (retries > 0) {
+                    console.log('429 received, retrying in 2s...');
+                    showToast('Лимит API. Повтор через 2 сек...', 'error');
+                    await new Promise(r => setTimeout(r, 2000));
+                    return cgGet(endpoint, useCache, retries - 1);
+                }
+                showToast('Слишком много запросов. Подождите минуту.', 'error');
                 return null;
             }
             if (!res.ok) throw new Error('API Error ' + res.status);
@@ -976,7 +932,6 @@
         }
     }
 
-    // ==================== ГЛОБАЛЬНАЯ СТАТИСТИКА ====================
     async function loadGlobalStats() {
         const data = await cgGet('/global', true);
         if (!data || !data.data) return;
@@ -1000,7 +955,6 @@
             </div>`;
     }
 
-    // ==================== ТОП МОНЕТ ====================
     async function loadTopCoins() {
         const data = await cgGet(
             '/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h',
@@ -1025,8 +979,6 @@
             const isInWatchlist = watchlist.includes(coin.id);
             return createCoinCardHTML(coin, isInWatchlist);
         }).join('');
-
-        console.log(`Rendered ${coins.length} coins in ${containerId}`);
     }
 
     function createCoinCardHTML(coin, isInWatchlist) {
@@ -1079,7 +1031,6 @@
         renderCoinsList(filtered, 'coinsList');
     }
 
-    // ==================== ПОИСК ====================
     function initSearch() {
         const input = document.getElementById('searchInput');
         const btn = document.getElementById('searchBtn');
@@ -1149,25 +1100,35 @@
         }).join('');
     }
 
-    // ==================== ДЕТАЛИ МОНЕТЫ ====================
     async function openCoinDetail(coinId) {
         console.log('Opening coin detail:', coinId);
         currentCoinId = coinId;
+        currentCoinData = null;
 
-        // Показываем модалку
+        if (chartLoadTimeout) {
+            clearTimeout(chartLoadTimeout);
+            chartLoadTimeout = null;
+        }
+
+        if (chartInstance) {
+            try { chartInstance.destroy(); } catch (e) {}
+            chartInstance = null;
+        }
+
         document.getElementById('coinModal').classList.add('active');
         document.getElementById('modalBody').innerHTML = '<div class="loading">Загрузка...</div>';
         document.getElementById('modalTitle').textContent = 'Загрузка...';
         updateModalWatchlistButton();
 
-        // Загружаем данные
         const coin = await cgGet(
             '/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false',
-            false
+            true
         );
 
+        if (currentCoinId !== coinId) return;
+
         if (!coin) {
-            document.getElementById('modalBody').innerHTML = '<div class="loading">Ошибка загрузки</div>';
+            document.getElementById('modalBody').innerHTML = '<div class="loading">Ошибка загрузки. Попробуйте позже.</div>';
             return;
         }
 
@@ -1175,8 +1136,7 @@
         renderCoinDetail(coin);
         updateModalWatchlistButton();
 
-        // Загружаем график
-        setTimeout(() => loadCoinChart(coinId), 100);
+        chartLoadTimeout = setTimeout(() => loadCoinChart(coinId), 100);
     }
 
     function renderCoinDetail(coin) {
@@ -1232,26 +1192,33 @@
     }
 
     async function loadCoinChart(coinId, days = 7) {
+        if (currentCoinId !== coinId) return;
+
         const canvas = document.getElementById('priceChart');
         if (!canvas) return;
 
-        // Уничтожаем предыдущий график
         if (chartInstance) {
-            chartInstance.destroy();
+            try { chartInstance.destroy(); } catch (e) { console.error('Chart destroy error:', e); }
             chartInstance = null;
         }
 
         const data = await cgGet(
             '/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days,
-            false
+            true
         );
 
+        if (currentCoinId !== coinId) return;
+        if (!document.getElementById('coinModal').classList.contains('active')) return;
+
+        const canvasCheck = document.getElementById('priceChart');
+        if (!canvasCheck) return;
+
         if (!data || !data.prices || !data.prices.length) {
-            canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График недоступен</div>';
+            canvasCheck.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График недоступен</div>';
             return;
         }
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvasCheck.getContext('2d');
         const prices = data.prices.map(p => ({ x: p[0], y: p[1] }));
 
         try {
@@ -1318,59 +1285,51 @@
             });
         } catch (e) {
             console.error('Chart error:', e);
-            canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">Ошибка графика</div>';
+            canvasCheck.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">Ошибка графика</div>';
         }
     }
 
     function closeCoinDetailModal() {
+        if (chartLoadTimeout) {
+            clearTimeout(chartLoadTimeout);
+            chartLoadTimeout = null;
+        }
+
         document.getElementById('coinModal').classList.remove('active');
+
         if (chartInstance) {
-            chartInstance.destroy();
+            try { chartInstance.destroy(); } catch (e) { console.error('Chart destroy error:', e); }
             chartInstance = null;
         }
+
         currentCoinId = null;
         currentCoinData = null;
     }
 
-    // ==================== ИЗБРАННОЕ ====================
     function toggleWatchlist(coinId, coinName) {
-        console.log('Toggle watchlist:', coinId, coinName);
-        
         const index = watchlist.indexOf(coinId);
 
         if (index > -1) {
-            // Удаляем
             watchlist.splice(index, 1);
             showToast('Удалено: ' + coinName, 'success');
-            console.log('Removed from watchlist:', coinId);
         } else {
-            // Добавляем
             if (watchlist.length >= 50) {
                 showToast('Лимит: 50 монет', 'error');
                 return;
             }
             watchlist.push(coinId);
             showToast('Добавлено: ' + coinName + ' ⭐', 'success');
-            console.log('Added to watchlist:', coinId);
         }
 
-        // Сохраняем
         setStorage('watchlist', watchlist);
-        console.log('Watchlist saved:', watchlist);
-
-        // Обновляем UI
         updateAllUI();
 
-        // Обновляем список монет на рынке
         if (allCoins.length > 0) {
             renderCoinsList(allCoins, 'coinsList');
         }
 
-        // Обновляем кнопку в модалке
         updateModalWatchlistButton();
 
-        // Обновляем избранное, если вкладка активна
-        // ИСПРАВЛЕНО: теперь проверяем контент вкладки, а не кнопку
         const watchlistContent = document.getElementById('watchlistTab');
         if (watchlistContent && watchlistContent.classList.contains('active')) {
             loadWatchlist();
@@ -1406,12 +1365,7 @@
 
     async function loadWatchlist() {
         const container = document.getElementById('watchlistList');
-        if (!container) {
-            console.error('Watchlist container not found');
-            return;
-        }
-
-        console.log('Loading watchlist, count:', watchlist.length);
+        if (!container) return;
 
         if (!watchlist || watchlist.length === 0) {
             container.innerHTML = `
@@ -1425,7 +1379,6 @@
 
         container.innerHTML = '<div class="loading">Загрузка избранного...</div>';
 
-        // Загружаем данные одним запросом
         const ids = watchlist.join(',');
         const data = await cgGet(
             '/coins/markets?vs_currency=usd&ids=' + encodeURIComponent(ids) + 
@@ -1438,15 +1391,9 @@
             return;
         }
 
-        console.log('Watchlist data loaded:', data.length, 'coins');
-
-        // Создаем карту для быстрого поиска
         const coinMap = {};
-        data.forEach(coin => {
-            coinMap[coin.id] = coin;
-        });
+        data.forEach(coin => { coinMap[coin.id] = coin; });
 
-        // Сортируем в порядке добавления
         const sortedCoins = watchlist
             .map(id => coinMap[id])
             .filter(coin => coin !== undefined);
@@ -1456,15 +1403,9 @@
             return;
         }
 
-        // Рендерим
-        container.innerHTML = sortedCoins.map(coin => {
-            return createCoinCardHTML(coin, true);
-        }).join('');
-
-        console.log('Watchlist rendered:', sortedCoins.length, 'coins');
+        container.innerHTML = sortedCoins.map(coin => createCoinCardHTML(coin, true)).join('');
     }
 
-    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function formatPrice(price) {
         if (price == null || isNaN(price)) return '0.00';
         if (price >= 1) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1498,31 +1439,21 @@
         }, 3000);
     }
 
-    // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
-    // Закрытие модалки по клику на фон
     document.getElementById('coinModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCoinDetailModal();
-        }
+        if (e.target === this) closeCoinDetailModal();
     });
 
-    // Закрытие модалки по Escape
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && document.getElementById('coinModal').classList.contains('active')) {
             closeCoinDetailModal();
         }
     });
 
-    // Обработка темы Telegram
     if (tg) {
         tg.onEvent('themeChanged', function() {
             const theme = tg.themeParams;
-            if (theme.bg_color) {
-                document.documentElement.style.setProperty('--bg-primary', theme.bg_color);
-            }
-            if (theme.secondary_bg_color) {
-                document.documentElement.style.setProperty('--bg-secondary', theme.secondary_bg_color);
-            }
+            if (theme.bg_color) document.documentElement.style.setProperty('--bg-primary', theme.bg_color);
+            if (theme.secondary_bg_color) document.documentElement.style.setProperty('--bg-secondary', theme.secondary_bg_color);
         });
     }
 
