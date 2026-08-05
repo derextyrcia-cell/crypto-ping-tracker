@@ -19,7 +19,6 @@
             --success: #22c55e;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --premium: #f59e0b;
             --border: #334155;
             --radius: 12px;
             --radius-sm: 8px;
@@ -54,14 +53,13 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .premium-badge {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+        .watchlist-count-badge {
+            background: var(--accent);
             color: white;
-            padding: 4px 12px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
-            letter-spacing: 0.5px;
         }
         .nav-tabs {
             display: flex;
@@ -173,6 +171,23 @@
         }
         .coin-change.positive { color: var(--success); background: rgba(34, 197, 94, 0.1); }
         .coin-change.negative { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .coin-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .watchlist-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .watchlist-btn:hover { background: var(--bg-hover); }
+        .watchlist-btn.in-watchlist { color: var(--warning); }
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
         .search-box input {
             flex: 1; padding: 14px 18px;
@@ -188,18 +203,6 @@
         }
         .search-box button:hover { background: var(--accent-hover); }
         .search-results { display: flex; flex-direction: column; gap: 8px; }
-        .premium-overlay { text-align: center; padding: 40px 20px; }
-        .premium-cta h3 { font-size: 22px; margin-bottom: 12px; }
-        .premium-cta p { color: var(--text-secondary); margin-bottom: 24px; font-size: 15px; }
-        .premium-features {
-            display: flex; flex-direction: column; gap: 10px;
-            margin-bottom: 28px; text-align: left;
-            max-width: 300px; margin-left: auto; margin-right: auto;
-        }
-        .feature {
-            background: var(--bg-card); padding: 12px 16px;
-            border-radius: var(--radius-sm); font-size: 14px;
-        }
         .profile-card {
             background: var(--bg-card); padding: 28px;
             border-radius: var(--radius); text-align: center; margin-bottom: 16px;
@@ -212,17 +215,6 @@
         }
         .profile-card h3 { font-size: 20px; margin-bottom: 4px; }
         .profile-card p { color: var(--text-secondary); font-size: 14px; }
-        .status-card {
-            margin-top: 16px; padding: 14px;
-            background: var(--bg-secondary); border-radius: var(--radius-sm);
-        }
-        .status-badge {
-            display: inline-block; padding: 6px 16px;
-            border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 8px;
-        }
-        .status-badge.free { background: var(--bg-hover); color: var(--text-secondary); }
-        .status-badge.premium { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-        .status-text { font-size: 13px; color: var(--text-secondary); }
         .stats-grid {
             display: grid; grid-template-columns: repeat(2, 1fr);
             gap: 12px; margin-bottom: 20px;
@@ -238,57 +230,6 @@
             -webkit-text-fill-color: transparent;
         }
         .stat-label { font-size: 12px; color: var(--text-secondary); }
-        .premium-section {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            padding: 24px; border-radius: var(--radius);
-        }
-        .premium-section h3 { text-align: center; margin-bottom: 20px; font-size: 18px; }
-        .premium-plans {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 12px; margin-bottom: 20px;
-        }
-        .plan-card {
-            background: var(--bg-card); padding: 20px;
-            border-radius: var(--radius); text-align: center;
-            cursor: pointer; transition: all 0.2s;
-            border: 2px solid transparent; position: relative;
-        }
-        .plan-card:hover, .plan-card.selected { border-color: var(--premium); }
-        .plan-card.popular { position: relative; }
-        .plan-card.selected { border-color: var(--premium); }
-        .plan-badge {
-            position: absolute; top: -10px; left: 50%;
-            transform: translateX(-50%); background: var(--premium);
-            color: white; padding: 4px 12px; border-radius: 12px;
-            font-size: 10px; font-weight: 700;
-        }
-        .plan-name { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
-        .plan-price { font-size: 28px; font-weight: 700; }
-        .plan-period { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
-        .plan-save { font-size: 11px; color: var(--success); font-weight: 600; }
-        .btn-premium {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white; border: none; padding: 14px 28px;
-            border-radius: var(--radius); font-size: 15px;
-            font-weight: 700; cursor: pointer; width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn-premium:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
-        }
-        .btn-premium-large {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white; border: none; padding: 16px;
-            border-radius: var(--radius); font-size: 16px;
-            font-weight: 700; cursor: pointer; width: 100%;
-            transition: all 0.2s;
-        }
-        .btn-premium-large:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
-        }
         .modal {
             display: none; position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -331,35 +272,10 @@
         }
         .modal-action.active { color: var(--warning); }
         .modal-body { padding: 20px; }
-        .modal-close {
-            position: absolute; top: 16px; right: 16px;
-            background: none; border: none;
-            color: var(--text-secondary); font-size: 20px; cursor: pointer;
-        }
-        .premium-modal { padding: 32px 24px; position: relative; }
-        .premium-modal h2 { text-align: center; margin-bottom: 28px; font-size: 22px; }
-        .premium-features-list {
-            display: flex; flex-direction: column;
-            gap: 16px; margin-bottom: 28px;
-        }
-        .feature-item {
-            display: flex; align-items: center; gap: 16px;
-            padding: 16px; background: var(--bg-card); border-radius: var(--radius);
-        }
-        .feature-icon { font-size: 28px; }
-        .feature-title { font-weight: 700; margin-bottom: 4px; }
-        .feature-desc { font-size: 13px; color: var(--text-secondary); }
         .chart-container {
             background: var(--bg-card); padding: 20px;
             border-radius: var(--radius); margin-bottom: 20px; height: 300px;
         }
-        .chart-premium-overlay { position: relative; }
-        .chart-blur { filter: blur(8px); opacity: 0.3; }
-        .chart-lock {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); text-align: center;
-        }
-        .chart-lock-icon { font-size: 48px; margin-bottom: 12px; }
         .coin-detail-header {
             display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
         }
@@ -414,16 +330,13 @@
             .global-stats { grid-template-columns: 1fr; }
         }
     </style>
-<base target="_blank">
 </head>
 <body>
     <div id="app">
         <header class="header">
             <div class="header-content">
                 <h1>💎 CryptoPulse</h1>
-                <div class="user-badge" id="userBadge">
-                    <span id="premiumBadge" class="premium-badge hidden">PRO</span>
-                </div>
+                <span class="watchlist-count-badge" id="headerWatchlistCount">⭐ 0</span>
             </div>
         </header>
 
@@ -458,22 +371,12 @@
         </div>
 
         <div class="tab-content" id="watchlistTab">
-            <div class="premium-overlay" id="watchlistOverlay">
-                <div class="premium-cta">
-                    <h3>⭐ Избранное</h3>
-                    <p>Добавляй монеты в избранное и отслеживай их в одном месте</p>
-                    <div class="premium-features">
-                        <div class="feature">✅ До 50 монет в избранном</div>
-                        <div class="feature">✅ Быстрый доступ к ценам</div>
-                        <div class="feature">✅ Уведомления об изменениях</div>
-                    </div>
-                    <button class="btn-premium" onclick="showPremiumModal()">
-                        💎 Активировать Premium
-                    </button>
-                </div>
+            <div class="section-header">
+                <h2>⭐ Избранное</h2>
+                <button class="filter-btn" onclick="clearWatchlist()" style="font-size:12px;">Очистить всё</button>
             </div>
-            <div class="watchlist-content hidden" id="watchlistContent">
-                <div class="coins-list" id="watchlistList"></div>
+            <div class="coins-list" id="watchlistList">
+                <div class="loading">Загрузка...</div>
             </div>
         </div>
 
@@ -482,42 +385,16 @@
                 <div class="profile-avatar" id="profileAvatar">👤</div>
                 <h3 id="profileName">Пользователь</h3>
                 <p id="profileUsername"></p>
-                <div class="status-card" id="statusCard">
-                    <div class="status-badge free" id="statusBadge">Бесплатный</div>
-                    <p class="status-text" id="statusText">10 запросов в день</p>
-                </div>
             </div>
-
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="dailyRequests">0</div>
-                    <div class="stat-label">Запросов сегодня</div>
-                </div>
                 <div class="stat-card">
                     <div class="stat-value" id="watchlistCount">0</div>
                     <div class="stat-label">В избранном</div>
                 </div>
-            </div>
-
-            <div class="premium-section" id="premiumSection">
-                <h3>💎 CryptoPulse Premium</h3>
-                <div class="premium-plans">
-                    <div class="plan-card" onclick="selectPlan('monthly')">
-                        <div class="plan-name">📅 Месяц</div>
-                        <div class="plan-price">$2.99</div>
-                        <div class="plan-period">/месяц</div>
-                    </div>
-                    <div class="plan-card popular selected" onclick="selectPlan('yearly')">
-                        <div class="plan-badge">Выгодно</div>
-                        <div class="plan-name">📆 Год</div>
-                        <div class="plan-price">$24.99</div>
-                        <div class="plan-period">/год</div>
-                        <div class="plan-save">Экономия 30%</div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRequests">0</div>
+                    <div class="stat-label">Запросов сегодня</div>
                 </div>
-                <button class="btn-premium-large" id="buyBtn" onclick="buyPremium()">
-                    💎 Оформить Premium
-                </button>
             </div>
         </div>
     </div>
@@ -525,51 +402,11 @@
     <div class="modal" id="coinModal">
         <div class="modal-content">
             <div class="modal-header">
-                <button class="modal-back" onclick="closeModal()">←</button>
+                <button class="modal-back" onclick="closeCoinDetailModal()">←</button>
                 <div class="modal-title" id="modalTitle"></div>
-                <button class="modal-action" id="modalAction" onclick="toggleWatchlist()">⭐</button>
+                <button class="modal-action" id="modalWatchlistBtn" onclick="toggleWatchlistFromModal()">⭐</button>
             </div>
             <div class="modal-body" id="modalBody"></div>
-        </div>
-    </div>
-
-    <div class="modal" id="premiumModal">
-        <div class="modal-content premium-modal">
-            <button class="modal-close" onclick="closePremiumModal()">✕</button>
-            <h2>💎 CryptoPulse Premium</h2>
-            <div class="premium-features-list">
-                <div class="feature-item">
-                    <span class="feature-icon">📈</span>
-                    <div>
-                        <div class="feature-title">Графики цен</div>
-                        <div class="feature-desc">Исторические данные за 7/30/90/365 дней</div>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">⭐</span>
-                    <div>
-                        <div class="feature-title">Избранное</div>
-                        <div class="feature-desc">До 50 монет с быстрым доступом</div>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🔔</span>
-                    <div>
-                        <div class="feature-title">Уведомления</div>
-                        <div class="feature-desc">Оповещения о ценовых изменениях</div>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">📤</span>
-                    <div>
-                        <div class="feature-title">Экспорт данных</div>
-                        <div class="feature-desc">CSV и JSON форматы</div>
-                    </div>
-                </div>
-            </div>
-            <button class="btn-premium-large" onclick="buyPremium()">
-                Начать сейчас — от $2.99
-            </button>
         </div>
     </div>
 
@@ -578,10 +415,9 @@
     <script>
     // ==================== CONFIG ====================
     const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-    const API_KEY = ''; // CoinGecko не требует ключ для базового использования
     let tg = window.Telegram ? window.Telegram.WebApp : null;
-    let currentCoin = null;
-    let selectedPlan = 'yearly';
+    let currentCoinId = null;
+    let currentCoinData = null;
     let allCoins = [];
     let chartInstance = null;
 
@@ -609,19 +445,12 @@
     }
     function setStorage(key, val) { localStorage.setItem('cryptopulse_' + key, JSON.stringify(val)); }
 
-    let isPremium = getStorage('premium', false);
-    let premiumUntil = getStorage('premium_until', null);
+    // Состояние приложения
     let watchlist = getStorage('watchlist', []);
     let dailyRequests = getStorage('daily_requests', 0);
     let lastRequestDate = getStorage('last_request_date', null);
 
-    // Проверка срока премиума
-    if (premiumUntil && new Date(premiumUntil) < new Date()) {
-        isPremium = false;
-        setStorage('premium', false);
-    }
-
-    // Сброс счётчика запросов
+    // Сброс счётчика запросов при новом дне
     const today = new Date().toDateString();
     if (lastRequestDate !== today) {
         dailyRequests = 0;
@@ -641,59 +470,66 @@
         initSearch();
         loadGlobalStats();
         loadTopCoins();
-        updateUI();
-
-        if (isPremium) enablePremiumFeatures();
+        updateWatchlistUI();
+        updateProfileUI();
     });
 
     // ==================== UI UPDATE ====================
-    function updateUI() {
+    function updateProfileUI() {
         const user = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
         document.getElementById('profileName').textContent = user ? (user.first_name || 'Пользователь') : 'Гость';
         document.getElementById('profileUsername').textContent = user && user.username ? '@' + user.username : '';
-
-        if (isPremium) {
-            document.getElementById('premiumBadge').classList.remove('hidden');
-            document.getElementById('statusBadge').textContent = 'Premium';
-            document.getElementById('statusBadge').classList.remove('free');
-            document.getElementById('statusBadge').classList.add('premium');
-            document.getElementById('statusText').textContent = 'Безлимитные запросы';
-        }
-        document.getElementById('dailyRequests').textContent = dailyRequests;
         document.getElementById('watchlistCount').textContent = watchlist.length;
-        updatePremiumButtonState();
+        document.getElementById('totalRequests').textContent = dailyRequests;
     }
 
-    function updatePremiumButtonState() {
-        const btn = document.getElementById('buyBtn');
-        if (!btn) return;
-        if (isPremium) {
-            btn.textContent = '✅ Premium активен';
-            btn.disabled = true;
-            btn.style.opacity = '0.6';
-            btn.style.cursor = 'not-allowed';
-            btn.onclick = function() { showToast('Premium уже активен!', 'error'); };
+    function updateWatchlistUI() {
+        document.getElementById('headerWatchlistCount').textContent = '⭐ ' + watchlist.length;
+        document.getElementById('watchlistCount').textContent = watchlist.length;
+    }
+
+    function updateWatchlistButtonInModal() {
+        const btn = document.getElementById('modalWatchlistBtn');
+        if (btn && currentCoinId) {
+            btn.classList.toggle('active', watchlist.includes(currentCoinId));
         }
     }
 
-    // ==================== RATE LIMIT ====================
-    function canRequest() {
-        if (isPremium) return true;
-        if (dailyRequests >= 10) {
-            showToast('Лимит запросов исчерпан. Купи Premium!', 'error');
-            showPremiumModal();
-            return false;
+    // ==================== NAVIGATION ====================
+    function initNavigation() {
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+        });
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (e.target.dataset.filter) {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    filterCoins(e.target.dataset.filter);
+                }
+            });
+        });
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        
+        if (tabName === 'watchlist') {
+            loadWatchlist();
         }
+    }
+
+    // ==================== API HELPER ====================
+    function incrementRequestCount() {
         dailyRequests++;
         setStorage('daily_requests', dailyRequests);
-        document.getElementById('dailyRequests').textContent = dailyRequests;
-        return true;
+        document.getElementById('totalRequests').textContent = dailyRequests;
     }
 
-    // ==================== API ====================
     async function cgGet(endpoint, useCache = true) {
-        if (!canRequest()) return null;
-
         const url = COINGECKO_API + endpoint;
         const cacheKey = url;
 
@@ -707,45 +543,21 @@
             const timeoutId = setTimeout(() => controller.abort(), 15000);
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
+            
+            if (res.status === 429) {
+                showToast('Слишком много запросов. Подождите немного.', 'error');
+                return null;
+            }
             if (!res.ok) throw new Error('API Error ' + res.status);
+            
             const data = await res.json();
             setCache(cacheKey, data);
+            incrementRequestCount();
             return data;
         } catch(e) {
-            console.error(e);
+            console.error('API Error:', e);
             showToast('Ошибка загрузки данных', 'error');
             return null;
-        }
-    }
-
-    // ==================== NAVIGATION ====================
-    function initNavigation() {
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => switchTab(tab.dataset.tab));
-        });
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                filterCoins(btn.dataset.filter);
-            });
-        });
-    }
-
-    function switchTab(tabName) {
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
-        document.getElementById(tabName + 'Tab').classList.add('active');
-        if (tabName === 'watchlist') {
-            if (isPremium) {
-                document.getElementById('watchlistOverlay').classList.add('hidden');
-                document.getElementById('watchlistContent').classList.remove('hidden');
-                renderWatchlist();
-            } else {
-                document.getElementById('watchlistOverlay').classList.remove('hidden');
-                document.getElementById('watchlistContent').classList.add('hidden');
-            }
         }
     }
 
@@ -781,33 +593,51 @@
         renderCoins(allCoins);
     }
 
-    function renderCoins(coins) {
-        const container = document.getElementById('coinsList');
-        if (!coins || !coins.length) { container.innerHTML = '<div class="loading">Нет данных</div>'; return; }
-        container.innerHTML = coins.map(c => `
-            <div class="coin-card" onclick="openCoinDetail('${c.id}')">
+    function renderCoins(coins, containerId = 'coinsList') {
+        const container = document.getElementById(containerId);
+        if (!coins || !coins.length) { 
+            container.innerHTML = '<div class="loading">Нет данных</div>'; 
+            return; 
+        }
+
+        container.innerHTML = coins.map(c => {
+            const isInWatchlist = watchlist.includes(c.id);
+            return `
+            <div class="coin-card">
                 <div class="coin-rank">${c.market_cap_rank || '-'}</div>
-                <div class="coin-icon"><img src="${c.image}" alt="${c.name}" loading="lazy"></div>
-                <div class="coin-info">
+                <div class="coin-icon">
+                    <img src="${c.image}" alt="${c.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${c.symbol.charAt(0).toUpperCase()}'">
+                </div>
+                <div class="coin-info" onclick="openCoinDetail('${c.id}')">
                     <div class="coin-name">${c.name}</div>
                     <div class="coin-symbol">${c.symbol}</div>
                 </div>
-                <div class="coin-price-section">
+                <div class="coin-price-section" onclick="openCoinDetail('${c.id}')">
                     <div class="coin-price">$${formatPrice(c.current_price)}</div>
                     <div class="coin-change ${c.price_change_percentage_24h >= 0 ? 'positive' : 'negative'}">
                         ${c.price_change_percentage_24h >= 0 ? '+' : ''}${c.price_change_percentage_24h?.toFixed(2) || 0}%
                     </div>
                 </div>
-            </div>`).join('');
+                <button class="watchlist-btn ${isInWatchlist ? 'in-watchlist' : ''}" 
+                        onclick="event.stopPropagation(); toggleWatchlist('${c.id}', '${c.name.replace(/'/g, "\\'")}')" 
+                        title="${isInWatchlist ? 'Удалить из избранного' : 'Добавить в избранное'}">
+                    ${isInWatchlist ? '⭐' : '☆'}
+                </button>
+            </div>`;
+        }).join('');
     }
 
     function filterCoins(filter) {
         if (!allCoins.length) return;
         let filtered = [...allCoins];
         if (filter === 'gainers') {
-            filtered = filtered.filter(c => c.price_change_percentage_24h > 0).sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+            filtered = filtered
+                .filter(c => c.price_change_percentage_24h > 0)
+                .sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
         } else if (filter === 'losers') {
-            filtered = filtered.filter(c => c.price_change_percentage_24h < 0).sort((a,b) => a.price_change_percentage_24h - b.price_change_percentage_24h);
+            filtered = filtered
+                .filter(c => c.price_change_percentage_24h < 0)
+                .sort((a,b) => a.price_change_percentage_24h - b.price_change_percentage_24h);
         }
         renderCoins(filtered);
     }
@@ -819,98 +649,152 @@
         let timer;
         input.addEventListener('input', () => {
             clearTimeout(timer);
-            timer = setTimeout(() => { if (input.value.length > 1) searchCoins(input.value); }, 300);
+            timer = setTimeout(() => { 
+                if (input.value.length > 1) searchCoins(input.value); 
+                else document.getElementById('searchResults').innerHTML = '';
+            }, 400);
         });
-        btn.addEventListener('click', () => { if (input.value.length > 1) searchCoins(input.value); });
+        btn.addEventListener('click', () => { 
+            if (input.value.length > 1) searchCoins(input.value); 
+        });
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && input.value.length > 1) searchCoins(input.value);
+        });
     }
 
     async function searchCoins(query) {
+        document.getElementById('searchResults').innerHTML = '<div class="loading">Поиск...</div>';
         const data = await cgGet('/search?query=' + encodeURIComponent(query), false);
-        if (!data || !data.coins) return;
+        if (!data || !data.coins) {
+            document.getElementById('searchResults').innerHTML = '<div class="loading">Ошибка поиска</div>';
+            return;
+        }
         const container = document.getElementById('searchResults');
-        if (!data.coins.length) { container.innerHTML = '<div class="loading">Ничего не найдено</div>'; return; }
-        container.innerHTML = data.coins.slice(0, 10).map(c => `
-            <div class="coin-card" onclick="openCoinDetail('${c.id}')">
-                <div class="coin-icon"><img src="${c.thumb}" alt="${c.name}" loading="lazy"></div>
-                <div class="coin-info">
+        if (!data.coins.length) { 
+            container.innerHTML = '<div class="loading">Ничего не найдено</div>'; 
+            return; 
+        }
+
+        container.innerHTML = data.coins.slice(0, 20).map(c => {
+            const isInWatchlist = watchlist.includes(c.id);
+            return `
+            <div class="coin-card">
+                <div class="coin-icon">
+                    <img src="${c.thumb}" alt="${c.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${c.symbol.charAt(0).toUpperCase()}'">
+                </div>
+                <div class="coin-info" onclick="openCoinDetail('${c.id}')">
                     <div class="coin-name">${c.name}</div>
                     <div class="coin-symbol">${c.symbol}</div>
                 </div>
-                <div class="coin-price-section">
+                <div class="coin-price-section" onclick="openCoinDetail('${c.id}')">
                     <span style="color:var(--text-secondary);font-size:13px;">#${c.market_cap_rank || '-'}</span>
                 </div>
-            </div>`).join('');
+                <button class="watchlist-btn ${isInWatchlist ? 'in-watchlist' : ''}" 
+                        onclick="event.stopPropagation(); toggleWatchlist('${c.id}', '${c.name.replace(/'/g, "\\'")}')" 
+                        title="${isInWatchlist ? 'Удалить из избранного' : 'Добавить в избранное'}">
+                    ${isInWatchlist ? '⭐' : '☆'}
+                </button>
+            </div>`;
+        }).join('');
     }
 
-    // ==================== COIN DETAIL ====================
+    // ==================== COIN DETAIL MODAL ====================
     async function openCoinDetail(coinId) {
-        currentCoin = coinId;
-        const coin = await cgGet('/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', false);
-        if (!coin) return;
+        currentCoinId = coinId;
+        
+        document.getElementById('coinModal').classList.add('active');
+        document.getElementById('modalBody').innerHTML = '<div class="loading">Загрузка...</div>';
+        document.getElementById('modalTitle').textContent = 'Загрузка...';
+        updateWatchlistButtonInModal();
 
+        const coin = await cgGet('/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', false);
+        if (!coin) {
+            document.getElementById('modalBody').innerHTML = '<div class="loading">Ошибка загрузки данных монеты</div>';
+            return;
+        }
+        
+        currentCoinData = coin;
+        renderCoinDetail(coin);
+        updateWatchlistButtonInModal();
+
+        // Загружаем график
+        setTimeout(() => loadCoinChart(coinId), 100);
+    }
+
+    function renderCoinDetail(coin) {
         document.getElementById('modalTitle').innerHTML = `
             <img src="${coin.image.small}" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;border-radius:50%;">
-            ${coin.name}`;
+            ${coin.name} (${coin.symbol.toUpperCase()})`;
 
         const price = coin.market_data.current_price.usd;
         const change24h = coin.market_data.price_change_percentage_24h;
-
-        let chartHtml = '';
-        if (isPremium) {
-            chartHtml = `<div class="chart-container"><canvas id="priceChart"></canvas></div>`;
-        } else {
-            chartHtml = `
-                <div class="chart-container chart-premium-overlay">
-                    <div class="chart-blur" style="height:100%;background:linear-gradient(180deg,var(--bg-hover),var(--bg-card));border-radius:8px;"></div>
-                    <div class="chart-lock">
-                        <div class="chart-lock-icon">🔒</div>
-                        <p style="color:var(--text-secondary);margin-bottom:12px;">Графики доступны в Premium</p>
-                        <button class="btn-premium" onclick="showPremiumModal()" style="width:auto;padding:10px 20px;font-size:13px;">💎 Активировать</button>
-                    </div>
-                </div>`;
-        }
+        const changeClass = change24h >= 0 ? 'positive' : 'negative';
+        const changeBg = change24h >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
 
         document.getElementById('modalBody').innerHTML = `
             <div class="coin-detail-header">
-                <div class="coin-detail-icon"><img src="${coin.image.large}" alt="${coin.name}"></div>
+                <div class="coin-detail-icon">
+                    <img src="${coin.image.large}" alt="${coin.name}" onerror="this.style.display='none';this.parentElement.textContent='${coin.symbol.charAt(0).toUpperCase()}'">
+                </div>
                 <div class="coin-detail-info">
                     <h2>${coin.name}</h2>
                     <p>${coin.symbol.toUpperCase()} • Rank #${coin.market_cap_rank}</p>
                 </div>
             </div>
             <div class="coin-detail-price">$${formatPrice(price)}</div>
-            <div class="coin-detail-change ${change24h >= 0 ? 'positive' : 'negative'}" style="background:${change24h >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)'}">
+            <div class="coin-detail-change ${changeClass}" style="background:${changeBg}">
                 ${change24h >= 0 ? '+' : ''}${change24h?.toFixed(2) || 0}% (24ч)
             </div>
-            ${chartHtml}
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
             <div class="stats-row">
-                <div class="stat-box"><div class="label">Капитализация</div><div class="value">$${formatNumber(coin.market_data.market_cap.usd)}</div></div>
-                <div class="stat-box"><div class="label">Объём 24ч</div><div class="value">$${formatNumber(coin.market_data.total_volume.usd)}</div></div>
-                <div class="stat-box"><div class="label">Макс. цена</div><div class="value">$${formatPrice(coin.market_data.ath.usd)}</div></div>
-                <div class="stat-box"><div class="label">Циркуляция</div><div class="value">${formatNumber(coin.market_data.circulating_supply)} ${coin.symbol.toUpperCase()}</div></div>
+                <div class="stat-box">
+                    <div class="label">Рыночная капитализация</div>
+                    <div class="value">$${formatNumber(coin.market_data.market_cap.usd)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Объём торгов 24ч</div>
+                    <div class="value">$${formatNumber(coin.market_data.total_volume.usd)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Исторический максимум</div>
+                    <div class="value">$${formatPrice(coin.market_data.ath.usd)}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">В обращении</div>
+                    <div class="value">${formatNumber(coin.market_data.circulating_supply)} ${coin.symbol.toUpperCase()}</div>
+                </div>
+                ${coin.market_data.market_cap_rank ? `
+                <div class="stat-box">
+                    <div class="label">Макс. предложение</div>
+                    <div class="value">${coin.market_data.max_supply ? formatNumber(coin.market_data.max_supply) + ' ' + coin.symbol.toUpperCase() : '∞'}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Полностью разводнённая</div>
+                    <div class="value">${coin.market_data.fully_diluted_valuation.usd ? '$' + formatNumber(coin.market_data.fully_diluted_valuation.usd) : 'N/A'}</div>
+                </div>
+                ` : ''}
             </div>`;
-
-        updateWatchlistButton();
-        if (isPremium) {
-            setTimeout(() => loadCoinChart(coinId), 50);
-        }
-        document.getElementById('coinModal').classList.add('active');
     }
 
     async function loadCoinChart(coinId, days = 7) {
+        const canvas = document.getElementById('priceChart');
+        if (!canvas) return;
+
+        // Уничтожаем предыдущий график
+        if (chartInstance) { 
+            chartInstance.destroy(); 
+            chartInstance = null; 
+        }
+
         const data = await cgGet('/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days, false);
         if (!data || !data.prices || !data.prices.length) {
-            console.error('No chart data');
+            canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">Данные графика недоступны</div>';
             return;
         }
 
-        const canvas = document.getElementById('priceChart');
-        if (!canvas) { console.error('Canvas not found'); return; }
         const ctx = canvas.getContext('2d');
-        if (!ctx) { console.error('Cannot get 2d context'); return; }
-
-        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-
         const prices = data.prices.map(p => ({ x: p[0], y: p[1] }));
 
         try {
@@ -918,14 +802,15 @@
                 type: 'line',
                 data: { 
                     datasets: [{ 
-                        label: 'Цена', 
+                        label: 'Цена USD', 
                         data: prices, 
                         borderColor: '#3b82f6', 
                         backgroundColor: 'rgba(59,130,246,0.1)', 
                         fill: true, 
                         tension: 0.4, 
                         pointRadius: 0, 
-                        pointHoverRadius: 6 
+                        pointHoverRadius: 6,
+                        borderWidth: 2
                     }] 
                 },
                 options: {
@@ -942,6 +827,7 @@
                             borderWidth: 1,
                             callbacks: { 
                                 title: (items) => {
+                                    if (!items.length) return '';
                                     const d = new Date(items[0].parsed.x);
                                     return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
                                 },
@@ -955,7 +841,7 @@
                             grid: { color: '#334155', drawBorder: false }, 
                             ticks: { 
                                 color: '#94a3b8',
-                                maxTicksLimit: 6,
+                                maxTicksLimit: 8,
                                 callback: function(value) {
                                     const d = new Date(value);
                                     return d.toLocaleDateString('ru-RU', {day:'2-digit', month:'short'});
@@ -964,184 +850,206 @@
                         },
                         y: { 
                             grid: { color: '#334155', drawBorder: false }, 
-                            ticks: { color: '#94a3b8', callback: (v) => '$' + formatPrice(v) } 
+                            ticks: { 
+                                color: '#94a3b8', 
+                                callback: (v) => '$' + formatPrice(v) 
+                            } 
                         }
                     }
                 }
             });
         } catch (e) {
-            console.error('Chart error:', e);
-            canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График временно недоступен</div>';
+            console.error('Chart creation error:', e);
+            canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">Ошибка отображения графика</div>';
         }
     }
 
-    function closeModal() {
+    function closeCoinDetailModal() {
         document.getElementById('coinModal').classList.remove('active');
-        currentCoin = null;
-        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+        if (chartInstance) { 
+            chartInstance.destroy(); 
+            chartInstance = null; 
+        }
+        currentCoinId = null;
+        currentCoinData = null;
     }
 
-    // ==================== WATCHLIST ====================
-    function enablePremiumFeatures() {
-        document.getElementById('watchlistOverlay').classList.add('hidden');
-        document.getElementById('watchlistContent').classList.remove('hidden');
-        updatePremiumButtonState();
-        // Если вкладка избранного активна, перерендерим
-        if (document.getElementById('watchlistTab').classList.contains('active')) {
-            renderWatchlist();
-        }
-    }
-
-    function renderWatchlist() {
-        const container = document.getElementById('watchlistList');
-
-        if (!watchlist || !watchlist.length) { 
-            container.innerHTML = '<div class="loading">Избранное пусто. Добавь монеты из поиска или рынка!</div>'; 
-            return; 
-        }
-
-        container.innerHTML = '<div class="loading">Загрузка ' + watchlist.length + ' монет...</div>';
-
-        // Проверяем каждую монету отдельно с обработкой ошибок
-        let loadedCoins = [];
-        let errors = [];
-        let completed = 0;
-
-        function checkComplete() {
-            completed++;
-            if (completed >= watchlist.length) {
-                if (loadedCoins.length > 0) {
-                    container.innerHTML = loadedCoins.map(coin => {
-                        const price = coin.market_data?.current_price?.usd || 0;
-                        const change = coin.market_data?.price_change_percentage_24h || 0;
-                        const img = coin.image?.small || '';
-                        const sym = (coin.symbol || '?').charAt(0).toUpperCase();
-
-                        return `<div class="coin-card" onclick="openCoinDetail('${coin.id}')">
-                            <div class="coin-icon">${img ? `<img src="${img}" alt="${coin.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${sym}'">` : `<span style="font-size:20px;">${sym}</span>`}</div>
-                            <div class="coin-info">
-                                <div class="coin-name">${coin.name || 'Unknown'}</div>
-                                <div class="coin-symbol">${coin.symbol || '?'}</div>
-                            </div>
-                            <div class="coin-price-section">
-                                <div class="coin-price">$${formatPrice(price)}</div>
-                                <div class="coin-change ${change >= 0 ? 'positive' : 'negative'}">
-                                    ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('');
-
-                    if (errors.length > 0) {
-                        showToast('Загружено ' + loadedCoins.length + ' из ' + watchlist.length, 'error');
-                    }
-                } else {
-                    container.innerHTML = '<div class="loading">Ошибка загрузки: ' + errors.join(', ') + '</div>';
-                }
-            }
-        }
-
-        watchlist.forEach(id => {
-            cgGet('/coins/' + id + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false', false)
-                .then(coin => {
-                    if (coin && coin.id) {
-                        loadedCoins.push(coin);
-                    } else {
-                        errors.push(id + ': нет данных');
-                    }
-                    checkComplete();
-                })
-                .catch(err => {
-                    errors.push(id + ': ' + (err.message || 'ошибка'));
-                    checkComplete();
-                });
-        });
-    }
-
-    function toggleWatchlist() {
-        if (!currentCoin) { showToast('Ошибка: нет выбранной монеты', 'error'); return; }
-        if (!isPremium) { showPremiumModal(); return; }
-
-        const idx = watchlist.indexOf(currentCoin);
-        if (idx >= 0) {
-            watchlist.splice(idx, 1);
-            showToast('Удалено: ' + currentCoin, 'success');
+    // ==================== WATCHLIST (Избранное) ====================
+    function toggleWatchlist(coinId, coinName) {
+        const index = watchlist.indexOf(coinId);
+        
+        if (index > -1) {
+            // Удаляем из избранного
+            watchlist.splice(index, 1);
+            showToast('Удалено из избранного: ' + coinName, 'success');
         } else {
-            if (watchlist.length >= 50) { showToast('Лимит 50 монет', 'error'); return; }
-            watchlist.push(currentCoin);
-            showToast('Добавлено: ' + currentCoin + ' (всего: ' + watchlist.length + ')', 'success');
+            // Добавляем в избранное
+            if (watchlist.length >= 50) {
+                showToast('Достигнут лимит: 50 монет', 'error');
+                return;
+            }
+            watchlist.push(coinId);
+            showToast('Добавлено в избранное: ' + coinName + ' ⭐', 'success');
         }
-
+        
+        // Сохраняем в localStorage
         setStorage('watchlist', watchlist);
-        updateWatchlistButton();
-        document.getElementById('watchlistCount').textContent = watchlist.length;
-        if (document.getElementById('watchlistTab').classList.contains('active')) renderWatchlist();
-    }
-
-    function updateWatchlistButton() {
-        const btn = document.getElementById('modalAction');
-        btn.classList.toggle('active', watchlist.includes(currentCoin));
-    }
-
-    // ==================== PREMIUM ====================
-    function showPremiumModal() { document.getElementById('premiumModal').classList.add('active'); }
-    function closePremiumModal() { document.getElementById('premiumModal').classList.remove('active'); }
-
-    function selectPlan(plan) {
-        selectedPlan = plan;
-        document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-        if (event && event.currentTarget) {
-            event.currentTarget.classList.add('selected');
+        
+        // Обновляем UI везде
+        updateWatchlistUI();
+        updateProfileUI();
+        
+        // Обновляем текущий список (рынок или поиск)
+        if (allCoins.length > 0) {
+            renderCoins(allCoins);
+        }
+        
+        // Обновляем кнопку в модалке, если она открыта
+        updateWatchlistButtonInModal();
+        
+        // Если вкладка избранного активна, перезагружаем её
+        if (document.getElementById('watchlistTab').classList.contains('active')) {
+            loadWatchlist();
         }
     }
 
-    function buyPremium() {
-        if (isPremium) {
-            showToast('Premium уже активен!', 'error');
+    function toggleWatchlistFromModal() {
+        if (!currentCoinId || !currentCoinData) return;
+        const coinName = currentCoinData.name || currentCoinId;
+        toggleWatchlist(currentCoinId, coinName);
+    }
+
+    function clearWatchlist() {
+        if (watchlist.length === 0) {
+            showToast('Избранное уже пустое', 'error');
             return;
         }
-        // Демо-активация (в продакшене здесь будет tg.openInvoice)
-        const days = selectedPlan === 'yearly' ? 365 : 30;
-        const until = new Date();
-        until.setDate(until.getDate() + days);
-        isPremium = true;
-        premiumUntil = until.toISOString();
-        setStorage('premium', true);
-        setStorage('premium_until', premiumUntil);
-        enablePremiumFeatures();
-        updateUI();
-        closePremiumModal();
-        updatePremiumButtonState();
-        showToast('Premium активирован! (Демо-режим)', 'success');
+        
+        if (confirm('Вы уверены, что хотите удалить все монеты из избранного?')) {
+            watchlist = [];
+            setStorage('watchlist', watchlist);
+            updateWatchlistUI();
+            updateProfileUI();
+            
+            if (allCoins.length > 0) {
+                renderCoins(allCoins);
+            }
+            
+            updateWatchlistButtonInModal();
+            loadWatchlist();
+            showToast('Избранное очищено', 'success');
+        }
+    }
 
-        // В продакшене раскомментировать:
-        // if (tg) tg.openInvoice('premium_' + selectedPlan, (status) => { if (status === 'paid') { ... } });
+    async function loadWatchlist() {
+        const container = document.getElementById('watchlistList');
+        
+        if (!watchlist || watchlist.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center;padding:40px 20px;color:var(--text-secondary);">
+                    <div style="font-size:48px;margin-bottom:16px;">⭐</div>
+                    <h3 style="margin-bottom:8px;">Избранное пусто</h3>
+                    <p>Нажмите ☆ на любой монете, чтобы добавить её в избранное</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = '<div class="loading">Загрузка избранного...</div>';
+
+        // Загружаем данные всех монет из избранного
+        const ids = watchlist.join(',');
+        const data = await cgGet('/coins/markets?vs_currency=usd&ids=' + encodeURIComponent(ids) + '&order=market_cap_desc&sparkline=false&price_change_percentage=24h', false);
+        
+        if (!data || !data.length) {
+            container.innerHTML = '<div class="loading">Ошибка загрузки избранного</div>';
+            return;
+        }
+
+        // Сортируем в порядке добавления (watchlist order)
+        const coinMap = {};
+        data.forEach(coin => { coinMap[coin.id] = coin; });
+        
+        const sortedCoins = watchlist
+            .map(id => coinMap[id])
+            .filter(coin => coin !== undefined);
+
+        if (sortedCoins.length === 0) {
+            container.innerHTML = '<div class="loading">Не удалось загрузить данные</div>';
+            return;
+        }
+
+        container.innerHTML = sortedCoins.map(coin => {
+            const price = coin.current_price || 0;
+            const change = coin.price_change_percentage_24h || 0;
+            const changeClass = change >= 0 ? 'positive' : 'negative';
+            
+            return `
+            <div class="coin-card">
+                <div class="coin-rank">#${coin.market_cap_rank || '-'}</div>
+                <div class="coin-icon">
+                    <img src="${coin.image}" alt="${coin.name}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${coin.symbol.charAt(0).toUpperCase()}'">
+                </div>
+                <div class="coin-info" onclick="openCoinDetail('${coin.id}')">
+                    <div class="coin-name">${coin.name}</div>
+                    <div class="coin-symbol">${coin.symbol}</div>
+                </div>
+                <div class="coin-price-section" onclick="openCoinDetail('${coin.id}')">
+                    <div class="coin-price">$${formatPrice(price)}</div>
+                    <div class="coin-change ${changeClass}">
+                        ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                    </div>
+                </div>
+                <button class="watchlist-btn in-watchlist" 
+                        onclick="event.stopPropagation(); toggleWatchlist('${coin.id}', '${coin.name.replace(/'/g, "\\'")}')" 
+                        title="Удалить из избранного">
+                    ⭐
+                </button>
+            </div>`;
+        }).join('');
+
+        // Показываем сколько загружено
+        if (sortedCoins.length < watchlist.length) {
+            showToast('Загружено ' + sortedCoins.length + ' из ' + watchlist.length + ' монет', 'error');
+        }
     }
 
     // ==================== UTILS ====================
     function formatPrice(price) {
-        if (!price) return '0.00';
+        if (price == null || isNaN(price)) return '0.00';
         if (price >= 1) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (price >= 0.01) return price.toFixed(4);
         return price.toFixed(6);
     }
+
     function formatNumber(num) {
-        if (!num) return '0';
+        if (!num || isNaN(num)) return '0';
         if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
         if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
         if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
         if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-        return num.toLocaleString();
+        return num.toLocaleString('en-US');
     }
+
     function showToast(message, type) {
         const toast = document.getElementById('toast');
         toast.textContent = message;
         toast.className = 'toast ' + (type || 'info') + ' show';
-        setTimeout(() => toast.classList.remove('show'), 3000);
+        // Очищаем предыдущий таймаут
+        if (toast._timeout) clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Закрытие модалок по клику вне
-    document.getElementById('coinModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
-    document.getElementById('premiumModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePremiumModal(); });
+    // Закрытие модалки по клику на фон
+    document.getElementById('coinModal').addEventListener('click', (e) => { 
+        if (e.target === e.currentTarget) closeCoinDetailModal(); 
+    });
+
+    // Закрытие модалки по кнопке Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('coinModal').classList.contains('active')) {
+            closeCoinDetailModal();
+        }
+    });
     </script>
 </body>
 </html>
