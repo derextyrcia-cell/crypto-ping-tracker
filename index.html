@@ -696,7 +696,7 @@
         <nav class="nav-tabs">
             <button class="nav-tab active" data-tab="market">📊 Рынок</button>
             <button class="nav-tab" data-tab="search">🔍 Поиск</button>
-            <button class="nav-tab" data-tab="watchlist" id="watchlistTab">⭐ Избранное</button>
+            <button class="nav-tab" data-tab="watchlist">⭐ Избранное</button>
             <button class="nav-tab" data-tab="profile">👤 Профиль</button>
         </nav>
 
@@ -1370,7 +1370,9 @@
         updateModalWatchlistButton();
 
         // Обновляем избранное, если вкладка активна
-        if (document.getElementById('watchlistTab').classList.contains('active')) {
+        // ИСПРАВЛЕНО: теперь проверяем контент вкладки, а не кнопку
+        const watchlistContent = document.getElementById('watchlistTab');
+        if (watchlistContent && watchlistContent.classList.contains('active')) {
             loadWatchlist();
         }
     }
