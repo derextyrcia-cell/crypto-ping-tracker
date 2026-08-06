@@ -633,6 +633,30 @@
             color: var(--text-primary);
         }
 
+        .chart-timeframes {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            justify-content: center;
+        }
+
+        .chart-timeframe-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-timeframe-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -747,8 +771,13 @@
     <div class="toast" id="toast"></div>
 
     <script>
-    // CoinPaprika API base URL
+    // Используем CoinGecko API как основной (он более стабильный)
+    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    // CoinPaprika как запасной вариант
     const COINPAPRIKA_API = 'https://api.coinpaprika.com/v1';
+    
+    // Флаг для выбора API (можно переключать)
+    let useCoinGecko = true; // true = CoinGecko, false = CoinPaprika
 
     let tg = null;
     try {
@@ -768,7 +797,7 @@
     let currentCoinData = null;
     let allCoins = [];
     let chartInstance = null;
-    let chartLoadTimeout = null;
+    let currentChartDays = 7;
 
     const CACHE_TTL = 60 * 1000;
     let apiCache = {};
@@ -816,7 +845,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('App initialized with CoinPaprika API');
+        console.log('App initialized');
+        console.log('Using API:', useCoinGecko ? 'CoinGecko' : 'CoinPaprika');
         console.log('Watchlist from storage:', watchlist);
 
         initNavigation();
@@ -891,15 +921,76 @@
         document.getElementById('totalRequests').textContent = dailyRequests;
     }
 
-    // Generic API fetch function for CoinPaprika
-    async function cpGet(endpoint, useCache = true, retries = 1) {
-        const url = COINPAPRIKA_API + endpoint;
+    // Универсальная функция запросов с fallback
+    async function apiGet(endpoint, useCache = true, retries = 2) {
+        // Пробуем CoinGecko
+        if (useCoinGecko) {
+            const cgUrl = COINGECKO_API + endpoint;
+            try {
+                const result = await fetchWithRetry(cgUrl, useCache, retries);
+                if (result) return result;
+            } catch (e) {
+                console.log('CoinGecko failed, trying CoinPaprika...');
+            }
+            
+            // Fallback на CoinPaprika
+            const cpEndpoint = convertToCoinPaprikaEndpoint(endpoint);
+            if (cpEndpoint) {
+                try {
+                    const result = await fetchWithRetry(COINPAPRIKA_API + cpEndpoint, useCache, retries, true);
+                    if (result) return result;
+                } catch (e) {
+                    console.error('Both APIs failed');
+                }
+            }
+        } else {
+            // Используем CoinPaprika напрямую
+            const cpEndpoint = convertToCoinPaprikaEndpoint(endpoint);
+            if (cpEndpoint) {
+                try {
+                    const result = await fetchWithRetry(COINPAPRIKA_API + cpEndpoint, useCache, retries, true);
+                    if (result) return result;
+                } catch (e) {
+                    console.error('CoinPaprika failed');
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    function convertToCoinPaprikaEndpoint(cgEndpoint) {
+        // Конвертация эндпоинтов CoinGecko в CoinPaprika
+        if (cgEndpoint === '/global') return '/global';
+        if (cgEndpoint.startsWith('/coins/markets')) return '/tickers?quotes=USD';
+        if (cgEndpoint.startsWith('/search')) {
+            const query = cgEndpoint.match(/query=([^&]+)/);
+            return query ? '/search?q=' + query[1] + '&c=coins&limit=20' : null;
+        }
+        if (cgEndpoint.startsWith('/coins/') && cgEndpoint.includes('market_chart')) {
+            const match = cgEndpoint.match(/\/coins\/([^/]+)\/market_chart/);
+            if (match) {
+                const coinId = match[1];
+                const daysMatch = cgEndpoint.match(/days=(\d+)/);
+                const days = daysMatch ? parseInt(daysMatch[1]) : 7;
+                const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                return `/coins/${coinId}/ohlcv/historical?start=${startDate}&limit=${days * 24}`;
+            }
+        }
+        if (cgEndpoint.startsWith('/coins/') && !cgEndpoint.includes('market_chart')) {
+            const match = cgEndpoint.match(/\/coins\/([^/?]+)/);
+            return match ? `/coins/${match[1]}` : null;
+        }
+        return null;
+    }
+
+    async function fetchWithRetry(url, useCache, retries, isCoinPaprika = false) {
         const cacheKey = url;
 
         if (useCache) {
             const cached = getCache(cacheKey);
             if (cached) {
-                console.log('Using cache for:', endpoint);
+                console.log('Using cache for:', url);
                 return cached;
             }
         }
@@ -916,63 +1007,151 @@
                     console.log('429 received, retrying in 2s...');
                     showToast('Лимит API. Повтор через 2 сек...', 'error');
                     await new Promise(r => setTimeout(r, 2000));
-                    return cpGet(endpoint, useCache, retries - 1);
+                    return fetchWithRetry(url, useCache, retries - 1, isCoinPaprika);
                 }
                 showToast('Слишком много запросов. Подождите минуту.', 'error');
                 return null;
             }
             if (!res.ok) throw new Error('API Error ' + res.status);
 
-            const data = await res.json();
+            let data = await res.json();
+            
+            // Если это CoinPaprika, конвертируем в формат CoinGecko
+            if (isCoinPaprika) {
+                data = convertCoinPaprikaToCoinGecko(data, url);
+            }
+            
             setCache(cacheKey, data);
             incrementRequestCount();
             return data;
         } catch (e) {
             console.error('API Error:', e);
-            showToast('Ошибка загрузки данных', 'error');
+            if (retries > 0) {
+                console.log('Retrying...');
+                await new Promise(r => setTimeout(r, 1000));
+                return fetchWithRetry(url, useCache, retries - 1, isCoinPaprika);
+            }
             return null;
         }
     }
 
-    async function loadGlobalStats() {
-        const data = await cpGet('/global', true);
-        if (!data) return;
+    function convertCoinPaprikaToCoinGecko(data, url) {
+        // Конвертация глобальной статистики
+        if (url.includes('/global')) {
+            return {
+                data: {
+                    total_market_cap: { usd: data.market_cap_usd },
+                    total_volume: { usd: data.volume_24h_usd },
+                    market_cap_change_percentage_24h_usd: data.market_cap_change_24h,
+                    market_cap_percentage: { btc: data.bitcoin_dominance_percentage }
+                }
+            };
+        }
+        
+        // Конвертация тикеров
+        if (url.includes('/tickers')) {
+            if (Array.isArray(data)) {
+                return data.slice(0, 50).map(ticker => ({
+                    id: ticker.id,
+                    name: ticker.name,
+                    symbol: ticker.symbol,
+                    market_cap_rank: ticker.rank,
+                    current_price: ticker.quotes.USD.price,
+                    market_cap: ticker.quotes.USD.market_cap,
+                    price_change_percentage_24h: ticker.quotes.USD.percent_change_24h,
+                    total_volume: ticker.quotes.USD.volume_24h,
+                    image: `https://static.coinpaprika.com/coin/${ticker.id}/logo.png`
+                }));
+            } else {
+                // Одиночный тикер
+                return {
+                    id: data.id,
+                    name: data.name,
+                    symbol: data.symbol,
+                    market_cap_rank: data.rank,
+                    market_data: {
+                        current_price: { usd: data.quotes.USD.price },
+                        market_cap: { usd: data.quotes.USD.market_cap },
+                        price_change_percentage_24h: data.quotes.USD.percent_change_24h,
+                        total_volume: { usd: data.quotes.USD.volume_24h },
+                        ath: { usd: data.quotes.USD.ath_price },
+                        circulating_supply: data.circulating_supply
+                    },
+                    image: {
+                        small: `https://static.coinpaprika.com/coin/${data.id}/logo.png`,
+                        large: `https://static.coinpaprika.com/coin/${data.id}/logo.png`
+                    }
+                };
+            }
+        }
+        
+        // Конвертация OHLCV данных
+        if (url.includes('/ohlcv/historical') && Array.isArray(data)) {
+            return {
+                prices: data.map(item => [
+                    new Date(item.time_open).getTime(),
+                    item.close
+                ])
+            };
+        }
+        
+        // Конвертация поиска
+        if (url.includes('/search')) {
+            return {
+                coins: (data.coins || []).map(coin => ({
+                    id: coin.id,
+                    name: coin.name,
+                    symbol: coin.symbol,
+                    market_cap_rank: coin.rank,
+                    thumb: `https://static.coinpaprika.com/coin/${coin.id}/logo.png`
+                }))
+            };
+        }
+        
+        return data;
+    }
 
+    async function loadGlobalStats() {
+        const data = await apiGet('/global', true);
+        if (!data || !data.data) {
+            document.getElementById('globalStats').innerHTML = `
+                <div class="global-stat">
+                    <div class="label">Ошибка загрузки</div>
+                    <div class="value">--</div>
+                </div>`;
+            return;
+        }
+
+        const g = data.data;
         document.getElementById('globalStats').innerHTML = `
             <div class="global-stat">
                 <div class="label">Капитализация</div>
-                <div class="value">$${formatNumber(data.market_cap_usd)}</div>
-                <div class="change ${data.market_cap_change_24h >= 0 ? 'positive' : 'negative'}">
-                    ${data.market_cap_change_24h >= 0 ? '+' : ''}${data.market_cap_change_24h.toFixed(2)}%
+                <div class="value">$${formatNumber(g.total_market_cap?.usd || 0)}</div>
+                <div class="change ${(g.market_cap_change_percentage_24h_usd || 0) >= 0 ? 'positive' : 'negative'}">
+                    ${(g.market_cap_change_percentage_24h_usd || 0) >= 0 ? '+' : ''}${(g.market_cap_change_percentage_24h_usd || 0).toFixed(2)}%
                 </div>
             </div>
             <div class="global-stat">
                 <div class="label">Объём 24ч</div>
-                <div class="value">$${formatNumber(data.volume_24h_usd)}</div>
+                <div class="value">$${formatNumber(g.total_volume?.usd || 0)}</div>
             </div>
             <div class="global-stat">
                 <div class="label">Доминация BTC</div>
-                <div class="value">${data.bitcoin_dominance_percentage.toFixed(1)}%</div>
+                <div class="value">${(g.market_cap_percentage?.btc || 0).toFixed(1)}%</div>
             </div>`;
     }
 
     async function loadTopCoins() {
-        const data = await cpGet('/tickers?quotes=USD', true);
-        if (!data) return;
+        const data = await apiGet(
+            '/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h',
+            true
+        );
+        if (!data || !Array.isArray(data)) {
+            document.getElementById('coinsList').innerHTML = '<div class="loading">Ошибка загрузки данных</div>';
+            return;
+        }
 
-        // CoinPaprika returns all tickers, take top 50 and transform to our format
-        allCoins = data.slice(0, 50).map(ticker => ({
-            id: ticker.id,
-            name: ticker.name,
-            symbol: ticker.symbol,
-            rank: ticker.rank,
-            current_price: ticker.quotes.USD.price,
-            market_cap: ticker.quotes.USD.market_cap,
-            price_change_percentage_24h: ticker.quotes.USD.percent_change_24h,
-            total_volume: ticker.quotes.USD.volume_24h,
-            image: `https://static.coinpaprika.com/coin/${ticker.id}/logo.png`
-        }));
-
+        allCoins = data;
         renderCoinsList(allCoins, 'coinsList');
     }
 
@@ -999,7 +1178,7 @@
 
         return `
         <div class="coin-card">
-            <div class="coin-rank">${coin.rank || '-'}</div>
+            <div class="coin-rank">${coin.market_cap_rank || '-'}</div>
             <div class="coin-icon">
                 <img src="${coin.image || ''}" 
                      alt="${coin.name || 'Coin'}" 
@@ -1073,8 +1252,7 @@
         const container = document.getElementById('searchResults');
         container.innerHTML = '<div class="loading">Поиск...</div>';
 
-        // CoinPaprika search endpoint
-        const data = await cpGet('/search?q=' + encodeURIComponent(query) + '&c=coins&limit=20', false);
+        const data = await apiGet('/search?query=' + encodeURIComponent(query), false);
         if (!data || !data.coins) {
             container.innerHTML = '<div class="loading">Ошибка поиска</div>';
             return;
@@ -1090,7 +1268,7 @@
             return `
             <div class="coin-card">
                 <div class="coin-icon">
-                    <img src="https://static.coinpaprika.com/coin/${c.id}/logo.png" 
+                    <img src="${c.thumb || ''}" 
                          alt="${c.name || 'Coin'}" 
                          loading="lazy" 
                          onerror="this.style.display='none';this.parentElement.textContent='${(c.symbol || '?').charAt(0).toUpperCase()}'">
@@ -1100,7 +1278,7 @@
                     <div class="coin-symbol">${(c.symbol || '?').toUpperCase()}</div>
                 </div>
                 <div class="coin-price-section" onclick="openCoinDetail('${c.id}')">
-                    <span style="color:var(--text-secondary);font-size:13px;">#${c.rank || '-'}</span>
+                    <span style="color:var(--text-secondary);font-size:13px;">#${c.market_cap_rank || '-'}</span>
                 </div>
                 <button class="watchlist-btn ${isInWatchlist ? 'in-watchlist' : ''}" 
                         onclick="event.stopPropagation(); toggleWatchlist('${c.id}', '${escapeHtml(c.name || 'Unknown')}')" 
@@ -1116,11 +1294,6 @@
         currentCoinId = coinId;
         currentCoinData = null;
 
-        if (chartLoadTimeout) {
-            clearTimeout(chartLoadTimeout);
-            chartLoadTimeout = null;
-        }
-
         if (chartInstance) {
             try { chartInstance.destroy(); } catch (e) {}
             chartInstance = null;
@@ -1131,8 +1304,10 @@
         document.getElementById('modalTitle').textContent = 'Загрузка...';
         updateModalWatchlistButton();
 
-        // Fetch coin detail from CoinPaprika
-        const coin = await cpGet('/coins/' + coinId, true);
+        const coin = await apiGet(
+            '/coins/' + coinId + '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false',
+            true
+        );
 
         if (currentCoinId !== coinId) return;
 
@@ -1141,60 +1316,48 @@
             return;
         }
 
-        // Also fetch ticker data for price info
-        const tickerData = await cpGet('/tickers/' + coinId + '?quotes=USD', true);
-        
-        if (currentCoinId !== coinId) return;
-
-        // Merge coin info with ticker data
-        const coinWithMarketData = {
-            ...coin,
-            quotes: tickerData ? tickerData.quotes : null,
-            rank: tickerData ? tickerData.rank : coin.rank
-        };
-
-        currentCoinData = coinWithMarketData;
-        renderCoinDetail(coinWithMarketData);
+        currentCoinData = coin;
+        renderCoinDetail(coin);
         updateModalWatchlistButton();
 
-        chartLoadTimeout = setTimeout(() => loadCoinChart(coinId), 100);
+        // Загружаем график
+        loadCoinChart(coinId, currentChartDays);
     }
 
     function renderCoinDetail(coin) {
         const symbol = (coin.symbol || '?').toUpperCase();
-        const logoUrl = `https://static.coinpaprika.com/coin/${coin.id}/logo.png`;
-        
         document.getElementById('modalTitle').innerHTML = `
-            <img src="${logoUrl}" 
+            <img src="${coin.image?.small || ''}" 
                  style="width:24px;height:24px;vertical-align:middle;margin-right:8px;border-radius:50%;"
                  onerror="this.style.display='none'">
             ${coin.name || 'Unknown'} (${symbol})`;
 
-        const quotes = coin.quotes?.USD || {};
-        const price = quotes.price || 0;
-        const change24h = quotes.percent_change_24h || 0;
+        const price = coin.market_data?.current_price?.usd || 0;
+        const change24h = coin.market_data?.price_change_percentage_24h || 0;
         const changeClass = change24h >= 0 ? 'positive' : 'negative';
         const changeBg = change24h >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
-        const marketCap = quotes.market_cap || 0;
-        const volume24h = quotes.volume_24h || 0;
-        const ath = quotes.ath_price || 0;
-        const circulatingSupply = coin.circulating_supply || 0;
 
         document.getElementById('modalBody').innerHTML = `
             <div class="coin-detail-header">
                 <div class="coin-detail-icon">
-                    <img src="${logoUrl}" 
+                    <img src="${coin.image?.large || ''}" 
                          alt="${coin.name || 'Coin'}"
                          onerror="this.style.display='none';this.parentElement.textContent='${symbol.charAt(0)}'">
                 </div>
                 <div class="coin-detail-info">
                     <h2>${coin.name || 'Unknown'}</h2>
-                    <p>${symbol} • Rank #${coin.rank || '-'}</p>
+                    <p>${symbol} • Rank #${coin.market_cap_rank || '-'}</p>
                 </div>
             </div>
             <div class="coin-detail-price">$${formatPrice(price)}</div>
             <div class="coin-detail-change ${changeClass}" style="background:${changeBg}">
                 ${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}% (24ч)
+            </div>
+            <div class="chart-timeframes">
+                <button class="chart-timeframe-btn ${currentChartDays === 1 ? 'active' : ''}" onclick="changeChartTimeframe(1)">24ч</button>
+                <button class="chart-timeframe-btn ${currentChartDays === 7 ? 'active' : ''}" onclick="changeChartTimeframe(7)">7д</button>
+                <button class="chart-timeframe-btn ${currentChartDays === 30 ? 'active' : ''}" onclick="changeChartTimeframe(30)">30д</button>
+                <button class="chart-timeframe-btn ${currentChartDays === 365 ? 'active' : ''}" onclick="changeChartTimeframe(365)">1г</button>
             </div>
             <div class="chart-container">
                 <canvas id="priceChart"></canvas>
@@ -1202,21 +1365,35 @@
             <div class="stats-row">
                 <div class="stat-box">
                     <div class="label">Рыночная капитализация</div>
-                    <div class="value">$${formatNumber(marketCap)}</div>
+                    <div class="value">$${formatNumber(coin.market_data?.market_cap?.usd || 0)}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Объём торгов 24ч</div>
-                    <div class="value">$${formatNumber(volume24h)}</div>
+                    <div class="value">$${formatNumber(coin.market_data?.total_volume?.usd || 0)}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Исторический максимум</div>
-                    <div class="value">$${formatPrice(ath)}</div>
+                    <div class="value">$${formatPrice(coin.market_data?.ath?.usd || 0)}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">В обращении</div>
-                    <div class="value">${formatNumber(circulatingSupply)} ${symbol}</div>
+                    <div class="value">${formatNumber(coin.market_data?.circulating_supply || 0)} ${symbol}</div>
                 </div>
             </div>`;
+    }
+
+    function changeChartTimeframe(days) {
+        currentChartDays = days;
+        document.querySelectorAll('.chart-timeframe-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.textContent) === days || 
+                (btn.textContent === '24ч' && days === 1) ||
+                (btn.textContent === '7д' && days === 7) ||
+                (btn.textContent === '30д' && days === 30) ||
+                (btn.textContent === '1г' && days === 365));
+        });
+        if (currentCoinId) {
+            loadCoinChart(currentCoinId, days);
+        }
     }
 
     async function loadCoinChart(coinId, days = 7) {
@@ -1230,23 +1407,14 @@
             chartInstance = null;
         }
 
-        // CoinPaprika uses different time intervals
-        let endpoint;
-        if (days <= 1) {
-            endpoint = '/coins/' + coinId + '/ohlcv/historical?start=' + 
-                new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 
-                '&limit=24';
-        } else if (days <= 7) {
-            endpoint = '/coins/' + coinId + '/ohlcv/historical?start=' + 
-                new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 
-                '&limit=168';
-        } else {
-            endpoint = '/coins/' + coinId + '/ohlcv/historical?start=' + 
-                new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 
-                '&limit=365';
-        }
+        // Показываем загрузку
+        const chartContainer = canvas.parentElement;
+        chartContainer.innerHTML = '<canvas id="priceChart"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-secondary);">Загрузка графика...</div>';
 
-        const data = await cpGet(endpoint, true);
+        const data = await apiGet(
+            '/coins/' + coinId + '/market_chart?vs_currency=usd&days=' + days,
+            true
+        );
 
         if (currentCoinId !== coinId) return;
         if (!document.getElementById('coinModal').classList.contains('active')) return;
@@ -1254,17 +1422,18 @@
         const canvasCheck = document.getElementById('priceChart');
         if (!canvasCheck) return;
 
-        if (!data || !data.length) {
-            canvasCheck.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График недоступен</div>';
+        // Восстанавливаем контейнер
+        canvasCheck.parentElement.innerHTML = '<canvas id="priceChart"></canvas>';
+        const newCanvas = document.getElementById('priceChart');
+        if (!newCanvas) return;
+
+        if (!data || !data.prices || !data.prices.length) {
+            newCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">График недоступен</div>';
             return;
         }
 
-        const ctx = canvasCheck.getContext('2d');
-        // CoinPaprika OHLCV format: [time_open, open, high, low, close, volume, market_cap]
-        const prices = data.map(item => ({
-            x: new Date(item.time_open).getTime(),
-            y: item.close
-        }));
+        const ctx = newCanvas.getContext('2d');
+        const prices = data.prices.map(p => ({ x: p[0], y: p[1] }));
 
         try {
             chartInstance = new Chart(ctx, {
@@ -1314,6 +1483,9 @@
                                 maxTicksLimit: 8,
                                 callback: function(value) {
                                     const d = new Date(value);
+                                    if (days <= 1) {
+                                        return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                                    }
                                     return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
                                 }
                             }
@@ -1330,16 +1502,11 @@
             });
         } catch (e) {
             console.error('Chart error:', e);
-            canvasCheck.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">Ошибка графика</div>';
+            newCanvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);">Ошибка графика</div>';
         }
     }
 
     function closeCoinDetailModal() {
-        if (chartLoadTimeout) {
-            clearTimeout(chartLoadTimeout);
-            chartLoadTimeout = null;
-        }
-
         document.getElementById('coinModal').classList.remove('active');
 
         if (chartInstance) {
@@ -1424,30 +1591,20 @@
 
         container.innerHTML = '<div class="loading">Загрузка избранного...</div>';
 
-        // Fetch all tickers and filter by watchlist IDs
-        const data = await cpGet('/tickers?quotes=USD', false);
+        const ids = watchlist.join(',');
+        const data = await apiGet(
+            '/coins/markets?vs_currency=usd&ids=' + encodeURIComponent(ids) + 
+            '&order=market_cap_desc&sparkline=false&price_change_percentage=24h',
+            false
+        );
 
-        if (!data) {
+        if (!data || !data.length) {
             container.innerHTML = '<div class="loading">Ошибка загрузки. Попробуйте позже.</div>';
             return;
         }
 
         const coinMap = {};
-        data.forEach(ticker => { 
-            if (watchlist.includes(ticker.id)) {
-                coinMap[ticker.id] = {
-                    id: ticker.id,
-                    name: ticker.name,
-                    symbol: ticker.symbol,
-                    rank: ticker.rank,
-                    current_price: ticker.quotes.USD.price,
-                    market_cap: ticker.quotes.USD.market_cap,
-                    price_change_percentage_24h: ticker.quotes.USD.percent_change_24h,
-                    total_volume: ticker.quotes.USD.volume_24h,
-                    image: `https://static.coinpaprika.com/coin/${ticker.id}/logo.png`
-                };
-            }
-        });
+        data.forEach(coin => { coinMap[coin.id] = coin; });
 
         const sortedCoins = watchlist
             .map(id => coinMap[id])
@@ -1512,7 +1669,7 @@
         });
     }
 
-    console.log('App setup complete with CoinPaprika API');
+    console.log('App setup complete');
     </script>
 </body>
 </html>
