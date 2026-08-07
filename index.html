@@ -514,30 +514,6 @@
         ::-webkit-scrollbar-track { background: var(--bg-primary); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        .chart-timeframe-selector {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 8px;
-            justify-content: center;
-        }
-
-        .chart-tf-btn {
-            padding: 4px 10px;
-            border: 1px solid var(--border);
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .chart-tf-btn.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
         @media (max-width: 480px) {
             .nav-tab { font-size: 11px; padding: 8px 6px; }
             .turbo-panel .live-price { font-size: 36px; }
@@ -565,7 +541,6 @@
             <button class="nav-tab" data-tab="profile">👤 Профиль</button>
         </nav>
 
-        <!-- Вкладка "Все пары" -->
         <div class="tab-content active" id="marketTab">
             <div class="search-box">
                 <input type="text" id="pairSearchInput" placeholder="🔍 Поиск по названию или символу..." autocomplete="off">
@@ -576,7 +551,6 @@
                 <button class="filter-chip" data-filter="BTC">₿ BTC</button>
                 <button class="filter-chip" data-filter="ETH">⟠ ETH</button>
                 <button class="filter-chip" data-filter="BNB">🟡 BNB</button>
-                <button class="filter-chip" data-filter="FDUSD">💲 FDUSD</button>
                 <button class="filter-chip" data-filter="gainers">📈 Рост</button>
                 <button class="filter-chip" data-filter="volume">🔥 Объём</button>
             </div>
@@ -589,7 +563,6 @@
             </div>
         </div>
 
-        <!-- Вкладка Turbo -->
         <div class="tab-content" id="turboTab">
             <div class="turbo-panel" id="turboPanel">
                 <h3>🚀 Turbo Режим</h3>
@@ -605,7 +578,6 @@
                 <div class="live-change positive" id="liveChange">--</div>
                 <div class="timer-display" id="turboTimerInfo"></div>
                 
-                <!-- График в реальном времени -->
                 <div class="turbo-chart-container">
                     <canvas id="realtimeChart"></canvas>
                 </div>
@@ -637,7 +609,6 @@
             </div>
         </div>
 
-        <!-- Вкладка "Избранное" -->
         <div class="tab-content" id="watchlistTab">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h2>⭐ Отслеживаемые пары</h2>
@@ -648,7 +619,6 @@
             </div>
         </div>
 
-        <!-- Вкладка "Профиль" -->
         <div class="tab-content" id="profileTab">
             <div class="stat-card" style="margin-bottom: 16px;">
                 <div class="stat-value" id="watchlistCount">0</div>
@@ -670,57 +640,46 @@
     <div class="toast" id="toast"></div>
 
     <script>
-    // ============ КОНСТАНТЫ ============
     const BINANCE_API = 'https://api.binance.com/api/v3';
     const BINANCE_WS_BASE = 'wss://stream.binance.com:9443/ws';
     
     let tg = window.Telegram?.WebApp || null;
     
-    // Состояние приложения
     let allPairs = [];
     let pairPrices = {};
     let filteredPairs = [];
     let currentFilter = 'all';
     let searchQuery = '';
     
-    // WebSocket и Turbo
+    // WebSocket соединения
     let cryptoSocket = null;
     let klineSocket = null;
+    
+    // ID для проверки актуальности соединения
+    let activeSymbol = null;
+    let socketId = 0;
+    
+    // Turbo состояние
     let turboTimer = null;
     let turboEndTime = null;
     let turboUpdateInterval = null;
-    let currentTurboSymbol = '';
     
     // График
     let realtimeChart = null;
     let chartData = [];
-    let maxChartPoints = 100;
     
     // Избранное и статистика
     let watchlist = [];
     let turboSessionsCount = 0;
 
-    // Символы валют для отображения
     const QUOTE_SYMBOLS = {
-        'USDT': '💲',
-        'USDC': '💲',
-        'BUSD': '💲',
-        'FDUSD': '💲',
-        'TUSD': '💲',
-        'BTC': '₿',
-        'ETH': '⟠',
-        'BNB': '🟡',
-        'XRP': '💧',
-        'DOGE': '🐕',
-        'SOL': '◎',
-        'ADA': '🔷',
-        'DOT': '⚫',
-        'MATIC': '🟣'
+        'USDT': '💲', 'USDC': '💲', 'BUSD': '💲', 'FDUSD': '💲', 'TUSD': '💲',
+        'BTC': '₿', 'ETH': '⟠', 'BNB': '🟡', 'XRP': '💧', 'DOGE': '🐕',
+        'SOL': '◎', 'ADA': '🔷', 'DOT': '⚫', 'MATIC': '🟣'
     };
 
-    // ============ ИНИЦИАЛИЗАЦИЯ ============
     document.addEventListener('DOMContentLoaded', async () => {
-        console.log('CryptoPulse Dynamic Pairs with Chart initializing...');
+        console.log('CryptoPulse initializing...');
         
         if (tg) {
             tg.ready();
@@ -736,10 +695,8 @@
         if (savedTurbo && savedTurbo.endTime > Date.now()) {
             const remainingMs = savedTurbo.endTime - Date.now();
             const remainingMinutes = Math.ceil(remainingMs / 60000);
-            currentTurboSymbol = savedTurbo.symbol || '';
-            document.getElementById('turboSymbolInput').value = currentTurboSymbol.toUpperCase();
-            startTurboWebSocket(currentTurboSymbol);
-            startKlineWebSocket(currentTurboSymbol);
+            document.getElementById('turboSymbolInput').value = savedTurbo.symbol.toUpperCase();
+            switchToPair(savedTurbo.symbol);
             startTurboTimer(remainingMinutes);
         }
         
@@ -751,16 +708,13 @@
     });
 
     function getStorage(key, def) {
-        try {
-            const value = localStorage.getItem('cryptopulse_' + key);
-            return value ? JSON.parse(value) : def;
-        } catch (e) { return def; }
+        try { return JSON.parse(localStorage.getItem('cryptopulse_' + key)) || def; }
+        catch (e) { return def; }
     }
 
     function setStorage(key, val) {
-        try {
-            localStorage.setItem('cryptopulse_' + key, JSON.stringify(val));
-        } catch (e) {}
+        try { localStorage.setItem('cryptopulse_' + key, JSON.stringify(val)); }
+        catch (e) {}
     }
 
     function updateAllUI() {
@@ -783,10 +737,10 @@
         });
     }
 
-    // ============ ЗАГРУЗКА ПАР С BINANCE ============
+    // ============ ЗАГРУЗКА ПАР ============
     async function loadAllPairs() {
         const container = document.getElementById('allPairsList');
-        container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Загрузка всех пар с Binance...</div></div>';
+        container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Загрузка пар с Binance...</div></div>';
         
         try {
             const exchangeInfo = await fetch(`${BINANCE_API}/exchangeInfo`).then(r => r.json());
@@ -796,21 +750,18 @@
                 .map(s => ({
                     symbol: s.symbol,
                     baseAsset: s.baseAsset,
-                    quoteAsset: s.quoteAsset,
-                    baseAssetPrecision: s.baseAssetPrecision,
-                    quotePrecision: s.quotePrecision
+                    quoteAsset: s.quoteAsset
                 }));
             
-            console.log(`Загружено ${allPairs.length} активных пар`);
-            document.getElementById('pairsCount').textContent = `Всего пар: ${allPairs.length} | Показано: ${allPairs.length}`;
+            console.log(`Загружено ${allPairs.length} пар`);
+            document.getElementById('pairsCount').textContent = `Всего пар: ${allPairs.length}`;
             
             await loadAllPrices();
-            
             filteredPairs = [...allPairs];
             applyCurrentFilters();
             updateAllUI();
         } catch (e) {
-            console.error('Ошибка загрузки пар:', e);
+            console.error('Ошибка:', e);
             container.innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
         }
     }
@@ -831,9 +782,8 @@
                     };
                 }
             });
-            console.log(`Загружены цены для ${Object.keys(pairPrices).length} пар`);
         } catch (e) {
-            console.error('Ошибка загрузки цен:', e);
+            console.error('Ошибка цен:', e);
         }
     }
 
@@ -887,28 +837,22 @@
             `Всего пар: ${allPairs.length} | Показано: ${filteredPairs.length}`;
     }
 
-    // ============ ФОРМАТИРОВАНИЕ ЦЕНЫ С УЧЁТОМ ВАЛЮТЫ ============
+    // ============ ФОРМАТИРОВАНИЕ ============
     function getQuoteIcon(quoteAsset) {
         return QUOTE_SYMBOLS[quoteAsset] || quoteAsset.charAt(0);
     }
 
     function formatPriceForPair(price, pair) {
         if (price == null || isNaN(price)) return '0.00';
-        
-        // Для BTC пар показываем больше знаков
         if (pair.quoteAsset === 'BTC') {
             if (price < 0.000001) return price.toFixed(8);
             if (price < 0.0001) return price.toFixed(6);
             return price.toFixed(4);
         }
-        
-        // Для ETH пар
         if (pair.quoteAsset === 'ETH') {
             if (price < 0.001) return price.toFixed(6);
             return price.toFixed(4);
         }
-        
-        // Для стейблкоинов и USD пар
         if (price >= 1000) return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
         if (price >= 1) return price.toFixed(2);
         if (price >= 0.01) return price.toFixed(4);
@@ -916,37 +860,32 @@
     }
 
     function getPricePrefix(quoteAsset) {
-        // Не показываем $ для не-USDT пар
-        if (['USDT', 'USDC', 'BUSD', 'FDUSD', 'TUSD'].includes(quoteAsset)) {
-            return '$';
-        }
-        return '';
+        return ['USDT', 'USDC', 'BUSD', 'FDUSD', 'TUSD'].includes(quoteAsset) ? '$' : '';
     }
 
-    // ============ РЕНДЕРИНГ СПИСКА ПАР ============
+    // ============ РЕНДЕРИНГ СПИСКА ============
     function renderPairsList(pairs) {
         const container = document.getElementById('allPairsList');
-        
         if (!pairs.length) {
             container.innerHTML = '<div class="loading">😕 Пары не найдены</div>';
             return;
         }
         
         const displayPairs = pairs.slice(0, 200);
+        const isTurboActive = activeSymbol !== null;
         
         container.innerHTML = displayPairs.map(pair => {
             const priceData = pairPrices[pair.symbol];
             const price = priceData?.price || 0;
             const change = priceData?.change || 0;
-            const volume = priceData?.quoteVolume || 0;
             const isWatched = watchlist.includes(pair.symbol);
-            const isTracking = currentTurboSymbol === pair.symbol.toLowerCase();
+            const isTracking = activeSymbol === pair.symbol.toLowerCase();
             const changeClass = change >= 0 ? 'positive' : 'negative';
             const quoteIcon = getQuoteIcon(pair.quoteAsset);
             const pricePrefix = getPricePrefix(pair.quoteAsset);
             
             const maxVolume = Math.max(...Object.values(pairPrices).map(p => p.quoteVolume || 0), 1);
-            const volumePercent = Math.min((volume / maxVolume) * 100, 100);
+            const volumePercent = Math.min(((priceData?.quoteVolume || 0) / maxVolume) * 100, 100);
             
             return `
             <div class="coin-card ${isTracking ? 'tracking' : ''}" onclick="selectPairForTurbo('${pair.symbol}')">
@@ -958,7 +897,6 @@
                         <div class="volume-bar">
                             <div class="volume-bar-fill" style="width: ${volumePercent}%"></div>
                         </div>
-                        <span style="font-size: 10px; color: var(--text-secondary);">Vol</span>
                     </div>
                 </div>
                 <div class="coin-price-section">
@@ -968,7 +906,7 @@
                     </div>
                     <div class="coin-change ${changeClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</div>
                 </div>
-                <button class="watchlist-btn ${isWatched ? 'in-watchlist' : ''}" 
+                <button class="watchlist-btn" 
                         onclick="event.stopPropagation(); toggleWatchlist('${pair.symbol}')"
                         style="background:none;border:none;color:${isWatched ? '#f59e0b' : 'var(--text-secondary)'};font-size:20px;cursor:pointer;padding:4px;">
                     ${isWatched ? '⭐' : '☆'}
@@ -981,88 +919,170 @@
         }
     }
 
-    // ============ TURBO WEBSOCKET (ЦЕНА) ============
-    function startTurboWebSocket(symbol) {
-        if (!symbol) {
-            showToast('Введите символ пары', 'error');
+    // ============ ПЕРЕКЛЮЧЕНИЕ ПАРЫ ============
+    function switchToPair(symbol) {
+        const normalizedSymbol = symbol.toLowerCase();
+        
+        // Если та же пара, не переподключаем
+        if (activeSymbol === normalizedSymbol) {
+            console.log('Та же пара, пропускаем переподключение');
             return;
         }
         
+        console.log(`Переключение с "${activeSymbol}" на "${normalizedSymbol}"`);
+        
+        // Увеличиваем ID для отслеживания устаревших соединений
+        socketId++;
+        const currentSocketId = socketId;
+        
+        // Закрываем старые соединения
+        closeAllSockets();
+        
+        // Очищаем данные графика
+        chartData = [];
+        if (realtimeChart) {
+            realtimeChart.destroy();
+            realtimeChart = null;
+        }
+        
+        // Очищаем отображение
+        clearTurboDisplay();
+        
+        // Устанавливаем новый активный символ
+        activeSymbol = normalizedSymbol;
+        document.getElementById('turboSymbolInput').value = symbol.toUpperCase();
+        
+        // Запускаем новые соединения с проверкой ID
+        startTurboWebSocket(symbol, currentSocketId);
+        startKlineWebSocket(symbol, currentSocketId);
+        
+        // Обновляем UI
+        updateTurboUIStatus(true);
+        document.getElementById('activateTurboBtn').classList.add('hidden');
+        document.getElementById('stopTurboBtn').classList.remove('hidden');
+        
+        // Обновляем список пар
+        applyCurrentFilters();
+    }
+
+    function clearTurboDisplay() {
+        document.getElementById('livePrice').textContent = '--';
+        document.getElementById('liveChange').textContent = '--';
+        document.getElementById('liveChange').className = 'live-change positive';
+        document.getElementById('turboHigh').textContent = '--';
+        document.getElementById('turboLow').textContent = '--';
+        document.getElementById('turboVolume').textContent = '--';
+        document.getElementById('turboTrades').textContent = '--';
+        
+        // Очищаем canvas графика
+        const canvas = document.getElementById('realtimeChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    function closeAllSockets() {
         if (cryptoSocket) {
+            cryptoSocket.onmessage = null; // Убираем обработчик
+            cryptoSocket.onclose = null;
             cryptoSocket.close();
             cryptoSocket = null;
         }
+        if (klineSocket) {
+            klineSocket.onmessage = null;
+            klineSocket.onclose = null;
+            klineSocket.close();
+            klineSocket = null;
+        }
+    }
 
-        currentTurboSymbol = symbol.toLowerCase();
-        const streamUrl = `${BINANCE_WS_BASE}/${currentTurboSymbol}@ticker`;
+    // ============ TURBO WEBSOCKET (ЦЕНА) ============
+    function startTurboWebSocket(symbol, connectionId) {
+        const streamUrl = `${BINANCE_WS_BASE}/${symbol.toLowerCase()}@ticker`;
+        console.log(`[WS Ticker #${connectionId}] Подключение: ${symbol}`);
         
-        console.log('[WebSocket Ticker] Подключение:', streamUrl);
-        cryptoSocket = new WebSocket(streamUrl);
+        const ws = new WebSocket(streamUrl);
+        cryptoSocket = ws;
 
-        cryptoSocket.onopen = () => {
-            console.log('[WebSocket Ticker] Активен для', currentTurboSymbol.toUpperCase());
-            updateTurboUIStatus(true);
-            document.getElementById('activateTurboBtn').classList.add('hidden');
-            document.getElementById('stopTurboBtn').classList.remove('hidden');
-            showToast(`🚀 Turbo: ${currentTurboSymbol.toUpperCase()}`, 'turbo');
+        ws.onopen = () => {
+            console.log(`[WS Ticker #${connectionId}] Открыт для ${symbol}`);
+            // Проверяем, не устарело ли соединение
+            if (connectionId !== socketId) {
+                console.log(`[WS Ticker #${connectionId}] Соединение устарело, закрываем`);
+                ws.close();
+                return;
+            }
+            showToast(`🚀 Turbo: ${symbol.toUpperCase()}`, 'turbo');
         };
 
-        cryptoSocket.onmessage = (event) => {
+        ws.onmessage = (event) => {
+            // Игнорируем сообщения от устаревших соединений
+            if (connectionId !== socketId) {
+                return;
+            }
+            
             try {
                 const data = JSON.parse(event.data);
-                renderTurboUpdate(data);
-                
-                // Обновляем кеш
-                if (pairPrices[currentTurboSymbol.toUpperCase()]) {
-                    pairPrices[currentTurboSymbol.toUpperCase()].price = parseFloat(data.c);
-                    pairPrices[currentTurboSymbol.toUpperCase()].change = parseFloat(data.P);
+                // Дополнительная проверка что данные для текущей пары
+                if (data.s && data.s.toLowerCase() === activeSymbol) {
+                    renderTurboUpdate(data);
+                    
+                    // Обновляем кеш
+                    if (pairPrices[data.s]) {
+                        pairPrices[data.s].price = parseFloat(data.c);
+                        pairPrices[data.s].change = parseFloat(data.P);
+                    }
                 }
             } catch (e) {
-                console.error('[WebSocket] Parse error:', e);
+                console.error('[WS Ticker] Parse error:', e);
             }
         };
 
-        cryptoSocket.onerror = (error) => {
-            console.error('[WebSocket] Error:', error);
+        ws.onerror = (error) => {
+            console.error(`[WS Ticker #${connectionId}] Error:`, error);
         };
 
-        cryptoSocket.onclose = (event) => {
-            console.log('[WebSocket Ticker] Закрыт:', event.code);
-            if (turboEndTime && Date.now() < turboEndTime) {
-                console.log('[WebSocket] Переподключение ticker...');
-                setTimeout(() => startTurboWebSocket(currentTurboSymbol), 2000);
-            } else {
-                updateTurboUIStatus(false);
-                document.getElementById('activateTurboBtn').classList.remove('hidden');
-                document.getElementById('stopTurboBtn').classList.add('hidden');
+        ws.onclose = (event) => {
+            console.log(`[WS Ticker #${connectionId}] Закрыт:`, event.code);
+            // Переподключаем только если это актуальное соединение и turbo активен
+            if (connectionId === socketId && turboEndTime && Date.now() < turboEndTime) {
+                console.log('Переподключение ticker...');
+                setTimeout(() => {
+                    if (connectionId === socketId) {
+                        startTurboWebSocket(activeSymbol.toUpperCase(), connectionId);
+                    }
+                }, 2000);
             }
         };
     }
 
     // ============ KLINE WEBSOCKET (ГРАФИК) ============
-    function startKlineWebSocket(symbol) {
-        if (klineSocket) {
-            klineSocket.close();
-            klineSocket = null;
-        }
-
+    function startKlineWebSocket(symbol, connectionId) {
         const streamUrl = `${BINANCE_WS_BASE}/${symbol.toLowerCase()}@kline_1m`;
+        console.log(`[WS Kline #${connectionId}] Подключение: ${symbol}`);
         
-        console.log('[WebSocket Kline] Подключение:', streamUrl);
-        klineSocket = new WebSocket(streamUrl);
+        const ws = new WebSocket(streamUrl);
+        klineSocket = ws;
 
-        klineSocket.onopen = () => {
-            console.log('[WebSocket Kline] Поток графика активен');
-            // Загружаем исторические данные для графика
-            loadHistoricalKlines(symbol);
+        ws.onopen = () => {
+            console.log(`[WS Kline #${connectionId}] Открыт для ${symbol}`);
+            if (connectionId !== socketId) {
+                ws.close();
+                return;
+            }
+            // Загружаем исторические данные
+            loadHistoricalKlines(symbol, connectionId);
         };
 
-        klineSocket.onmessage = (event) => {
+        ws.onmessage = (event) => {
+            if (connectionId !== socketId) return;
+            
             try {
                 const data = JSON.parse(event.data);
                 const kline = data.k;
                 
-                if (kline.x) { // Свеча закрыта
+                if (kline.x) {
                     addChartPoint({
                         time: kline.t,
                         open: parseFloat(kline.o),
@@ -1071,7 +1091,6 @@
                         close: parseFloat(kline.c)
                     });
                 } else {
-                    // Обновляем текущую свечу
                     updateLastChartPoint({
                         time: kline.t,
                         close: parseFloat(kline.c),
@@ -1080,19 +1099,22 @@
                     });
                 }
             } catch (e) {
-                console.error('[Kline] Parse error:', e);
+                console.error('[WS Kline] Parse error:', e);
             }
         };
 
-        klineSocket.onclose = () => {
-            console.log('[WebSocket Kline] Закрыт');
+        ws.onclose = () => {
+            console.log(`[WS Kline #${connectionId}] Закрыт`);
         };
     }
 
-    async function loadHistoricalKlines(symbol) {
+    async function loadHistoricalKlines(symbol, connectionId) {
         try {
             const res = await fetch(`${BINANCE_API}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=100`);
             const klines = await res.json();
+            
+            // Проверяем что соединение всё ещё актуально
+            if (connectionId !== socketId) return;
             
             chartData = klines.map(k => ({
                 time: k[0],
@@ -1104,17 +1126,17 @@
             
             initRealtimeChart();
         } catch (e) {
-            console.error('Ошибка загрузки исторических данных:', e);
-            chartData = [];
-            initRealtimeChart();
+            console.error('Ошибка загрузки истории:', e);
+            if (connectionId === socketId) {
+                chartData = [];
+                initRealtimeChart();
+            }
         }
     }
 
     function addChartPoint(point) {
         chartData.push(point);
-        if (chartData.length > maxChartPoints) {
-            chartData.shift();
-        }
+        if (chartData.length > 100) chartData.shift();
         updateChart();
     }
 
@@ -1139,7 +1161,6 @@
         }
 
         const ctx = canvas.getContext('2d');
-        
         const labels = chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
         const prices = chartData.map(d => d.close);
 
@@ -1148,7 +1169,6 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: currentTurboSymbol.toUpperCase(),
                     data: prices,
                     borderColor: '#ff6b35',
                     backgroundColor: 'rgba(255, 107, 53, 0.1)',
@@ -1162,56 +1182,26 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 0
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
+                animation: { duration: 0 },
+                interaction: { intersect: false, mode: 'index' },
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: '#1e293b',
                         titleColor: '#f1f5f9',
                         bodyColor: '#f1f5f9',
                         borderColor: '#334155',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: (ctx) => {
-                                const pair = allPairs.find(p => p.symbol === currentTurboSymbol.toUpperCase());
-                                const prefix = pair ? getPricePrefix(pair.quoteAsset) : '$';
-                                return prefix + formatPriceForPair(ctx.parsed.y, pair || { quoteAsset: 'USDT' });
-                            }
-                        }
+                        borderWidth: 1
                     }
                 },
                 scales: {
                     x: {
-                        grid: {
-                            color: '#334155',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#94a3b8',
-                            maxTicksLimit: 8,
-                            maxRotation: 0
-                        }
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8', maxTicksLimit: 8 }
                     },
                     y: {
-                        grid: {
-                            color: '#334155',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#94a3b8',
-                            callback: (v) => {
-                                const pair = allPairs.find(p => p.symbol === currentTurboSymbol.toUpperCase());
-                                return (pair ? getPricePrefix(pair.quoteAsset) : '') + formatPriceForPair(v, pair || { quoteAsset: 'USDT' });
-                            }
-                        }
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
                     }
                 }
             }
@@ -1223,42 +1213,34 @@
             initRealtimeChart();
             return;
         }
-
         const labels = chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
         const prices = chartData.map(d => d.close);
-
         realtimeChart.data.labels = labels;
         realtimeChart.data.datasets[0].data = prices;
         realtimeChart.update('none');
     }
 
-    // ============ АКТИВАЦИЯ/ДЕАКТИВАЦИЯ TURBO ============
+    // ============ АКТИВАЦИЯ TURBO ============
     function activateTurboSession(durationMinutes = 15) {
         let symbol = document.getElementById('turboSymbolInput').value.trim().toUpperCase();
         
         if (!symbol) {
-            showToast('Введите символ пары (например: BTCUSDT)', 'error');
+            showToast('Введите символ пары', 'error');
             return;
         }
         
         if (!allPairs.find(p => p.symbol === symbol)) {
-            showToast(`Пара ${symbol} не найдена на Binance`, 'error');
+            showToast(`Пара ${symbol} не найдена`, 'error');
             return;
         }
         
-        currentTurboSymbol = symbol.toLowerCase();
+        // Переключаемся на новую пару
+        switchToPair(symbol);
         
-        // Очищаем старый график
-        if (realtimeChart) {
-            realtimeChart.destroy();
-            realtimeChart = null;
-        }
-        chartData = [];
-        
-        startTurboWebSocket(symbol);
-        startKlineWebSocket(symbol);
+        // Запускаем таймер
         startTurboTimer(durationMinutes);
         
+        // Сохраняем состояние
         const endTime = Date.now() + durationMinutes * 60 * 1000;
         setStorage('turbo_state', {
             symbol: symbol.toLowerCase(),
@@ -1272,22 +1254,10 @@
     }
 
     function stopTurboWebSocket() {
-        if (cryptoSocket) {
-            cryptoSocket.close();
-            cryptoSocket = null;
-        }
-        if (klineSocket) {
-            klineSocket.close();
-            klineSocket = null;
-        }
-        if (turboTimer) {
-            clearTimeout(turboTimer);
-            turboTimer = null;
-        }
-        if (turboUpdateInterval) {
-            clearInterval(turboUpdateInterval);
-            turboUpdateInterval = null;
-        }
+        closeAllSockets();
+        
+        if (turboTimer) clearTimeout(turboTimer);
+        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
         
         if (realtimeChart) {
             realtimeChart.destroy();
@@ -1295,37 +1265,32 @@
         }
         
         turboEndTime = null;
-        currentTurboSymbol = '';
+        activeSymbol = null;
         chartData = [];
         
         updateTurboUIStatus(false);
         document.getElementById('activateTurboBtn').classList.remove('hidden');
         document.getElementById('stopTurboBtn').classList.add('hidden');
-        document.getElementById('livePrice').textContent = '--';
-        document.getElementById('liveChange').textContent = '--';
-        document.getElementById('turboTimerInfo').textContent = '';
-        document.getElementById('turboHigh').textContent = '--';
-        document.getElementById('turboLow').textContent = '--';
-        document.getElementById('turboVolume').textContent = '--';
-        document.getElementById('turboTrades').textContent = '--';
+        clearTurboDisplay();
         
         setStorage('turbo_state', null);
+        applyCurrentFilters();
         showToast('Turbo режим остановлен', 'error');
     }
 
     function startTurboTimer(durationMinutes) {
-        turboEndTime = Date.now() + durationMinutes * 60 * 1000;
-        
+        if (turboTimer) clearTimeout(turboTimer);
         if (turboUpdateInterval) clearInterval(turboUpdateInterval);
+        
+        turboEndTime = Date.now() + durationMinutes * 60 * 1000;
         
         const updateTimer = () => {
             const remaining = turboEndTime - Date.now();
             if (remaining <= 0) {
                 stopTurboWebSocket();
-                showToast('⏰ Turbo истек. Активируйте снова!', 'error');
+                showToast('⏰ Turbo истек!', 'error');
                 return;
             }
-            
             const m = Math.floor(remaining / 60000);
             const s = Math.floor((remaining % 60000) / 1000);
             document.getElementById('turboTimerInfo').textContent = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
@@ -1335,7 +1300,6 @@
         updateTimer();
         turboUpdateInterval = setInterval(updateTimer, 1000);
         
-        if (turboTimer) clearTimeout(turboTimer);
         turboTimer = setTimeout(() => {
             stopTurboWebSocket();
             showToast('⏰ Turbo истек!', 'error');
@@ -1350,19 +1314,21 @@
         const quoteVolume = parseFloat(data.q);
         const trades = parseInt(data.n);
         
-        const pair = allPairs.find(p => p.symbol === currentTurboSymbol.toUpperCase());
-        const prefix = pair ? getPricePrefix(pair.quoteAsset) : '$';
-        const quoteIcon = pair ? getQuoteIcon(pair.quoteAsset) : '💲';
+        const pair = allPairs.find(p => p.symbol === activeSymbol?.toUpperCase());
+        if (!pair) return;
+        
+        const prefix = getPricePrefix(pair.quoteAsset);
+        const quoteIcon = getQuoteIcon(pair.quoteAsset);
         
         document.getElementById('livePrice').textContent = 
-            `${quoteIcon} ${prefix}${formatPriceForPair(price, pair || { quoteAsset: 'USDT' })}`;
+            `${quoteIcon} ${prefix}${formatPriceForPair(price, pair)}`;
         
         const changeEl = document.getElementById('liveChange');
         changeEl.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
         changeEl.className = 'live-change ' + (changePercent >= 0 ? 'positive' : 'negative');
         
-        document.getElementById('turboHigh').textContent = prefix + formatPriceForPair(high, pair || { quoteAsset: 'USDT' });
-        document.getElementById('turboLow').textContent = prefix + formatPriceForPair(low, pair || { quoteAsset: 'USDT' });
+        document.getElementById('turboHigh').textContent = prefix + formatPriceForPair(high, pair);
+        document.getElementById('turboLow').textContent = prefix + formatPriceForPair(low, pair);
         document.getElementById('turboVolume').textContent = formatVolume(quoteVolume);
         document.getElementById('turboTrades').textContent = trades.toLocaleString();
     }
@@ -1387,7 +1353,6 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById('turboTab').classList.add('active');
         
-        currentTurboSymbol = symbol.toLowerCase();
         activateTurboSession();
     }
 
@@ -1432,14 +1397,8 @@
         }
         
         const pairs = watchlist.map(symbol => {
-            const pair = allPairs.find(p => p.symbol === symbol);
-            return pair || { symbol, baseAsset: symbol, quoteAsset: '?' };
+            return allPairs.find(p => p.symbol === symbol) || { symbol, baseAsset: symbol, quoteAsset: '?' };
         });
-        
-        if (!pairs.length) {
-            container.innerHTML = '<div class="loading">Нет данных</div>';
-            return;
-        }
         
         container.innerHTML = pairs.map(pair => {
             const priceData = pairPrices[pair.symbol];
@@ -1470,7 +1429,6 @@
         }).join('');
     }
 
-    // ============ УТИЛИТЫ ============
     function formatVolume(vol) {
         if (!vol || isNaN(vol)) return '0';
         if (vol >= 1e9) return (vol / 1e9).toFixed(2) + 'B';
@@ -1488,14 +1446,13 @@
     }
 
     window.addEventListener('beforeunload', () => {
-        if (cryptoSocket) cryptoSocket.close();
-        if (klineSocket) klineSocket.close();
+        closeAllSockets();
         if (turboTimer) clearTimeout(turboTimer);
         if (turboUpdateInterval) clearInterval(turboUpdateInterval);
         if (realtimeChart) realtimeChart.destroy();
     });
 
-    console.log('✅ CryptoPulse с графиком WebSocket готов');
+    console.log('✅ CryptoPulse готов');
     </script>
 </body>
 </html>
