@@ -31,12 +31,7 @@
             --radius-sm: 8px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -71,6 +66,25 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .credits-badge {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .credits-badge:hover { transform: scale(1.05); }
 
         .turbo-badge {
             padding: 6px 14px;
@@ -133,10 +147,7 @@
             min-width: fit-content;
         }
 
-        .nav-tab.active {
-            background: var(--accent);
-            color: white;
-        }
+        .nav-tab.active { background: var(--accent); color: white; }
 
         .tab-content {
             display: none;
@@ -146,13 +157,146 @@
             animation: fadeIn 0.3s ease;
         }
 
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content.active { display: block; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Модальное окно выбора пакета */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-dialog {
+            background: var(--bg-secondary);
+            border-radius: var(--radius) var(--radius) 0 0;
+            width: 100%;
+            max-width: 600px;
+            padding: 24px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-dialog h3 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .modal-dialog .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .package-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .package-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .package-card:hover { border-color: var(--accent); }
+        .package-card.selected { border-color: var(--turbo); background: rgba(255,107,53,0.05); }
+        .package-card.disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .package-card .package-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .package-card .package-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .package-card .package-price {
+            font-weight: 700;
+            color: var(--turbo);
+            font-size: 18px;
+        }
+
+        .package-card .package-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .package-card .package-best {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: var(--turbo);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .btn-ad {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            margin-top: 8px;
+        }
+
+        .btn-ad:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .turbo-panel {
@@ -164,10 +308,7 @@
             text-align: center;
         }
 
-        .turbo-panel h3 {
-            color: var(--turbo);
-            margin-bottom: 8px;
-        }
+        .turbo-panel h3 { color: var(--turbo); margin-bottom: 8px; }
 
         .turbo-panel .live-price {
             font-size: 48px;
@@ -217,9 +358,7 @@
             outline: none;
         }
 
-        .search-box input:focus {
-            border-color: var(--accent);
-        }
+        .search-box input:focus { border-color: var(--accent); }
 
         .filter-chips {
             display: flex;
@@ -241,55 +380,9 @@
             white-space: nowrap;
         }
 
-        .filter-chip.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
+        .filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        .activate-turbo-btn {
-            background: linear-gradient(135deg, #ff6b35, #ff8c42);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: var(--radius);
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-            transition: transform 0.2s;
-        }
-
-        .activate-turbo-btn:hover {
-            transform: scale(1.02);
-        }
-
-        .activate-turbo-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .stop-turbo-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 8px;
-            transition: transform 0.2s;
-        }
-
-        .coins-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .coins-list { display: flex; flex-direction: column; gap: 8px; }
 
         .coin-card {
             background: var(--bg-card);
@@ -303,11 +396,7 @@
             cursor: pointer;
         }
 
-        .coin-card:hover {
-            background: var(--bg-hover);
-            border-color: var(--border);
-        }
-
+        .coin-card:hover { background: var(--bg-hover); border-color: var(--border); }
         .coin-card.tracking {
             border-color: var(--accent);
             background: linear-gradient(135deg, rgba(59,130,246,0.05), var(--bg-card));
@@ -323,26 +412,11 @@
             text-align: center;
         }
 
-        .coin-info {
-            flex: 1;
-            min-width: 0;
-        }
+        .coin-info { flex: 1; min-width: 0; }
+        .coin-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+        .coin-pair { font-size: 11px; color: var(--text-secondary); }
 
-        .coin-name {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 2px;
-        }
-
-        .coin-pair {
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        .coin-price-section {
-            text-align: right;
-        }
-
+        .coin-price-section { text-align: right; }
         .coin-price {
             font-weight: 700;
             font-size: 15px;
@@ -353,10 +427,7 @@
             gap: 4px;
         }
 
-        .price-quote-icon {
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
+        .price-quote-icon { font-size: 11px; color: var(--text-secondary); }
 
         .coin-change {
             font-size: 12px;
@@ -366,15 +437,8 @@
             display: inline-block;
         }
 
-        .coin-change.positive {
-            color: var(--success);
-            background: rgba(34, 197, 94, 0.1);
-        }
-
-        .coin-change.negative {
-            color: var(--danger);
-            background: rgba(239, 68, 68, 0.1);
-        }
+        .coin-change.positive { color: var(--success); background: rgba(34,197,94,0.1); }
+        .coin-change.negative { color: var(--danger); background: rgba(239,68,68,0.1); }
 
         .pair-stats {
             display: grid;
@@ -390,38 +454,8 @@
             text-align: center;
         }
 
-        .pair-stat .label {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .pair-stat .value {
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .volume-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .volume-bar {
-            flex: 1;
-            height: 4px;
-            background: var(--border);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .volume-bar-fill {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 2px;
-            transition: width 0.3s;
-        }
+        .pair-stat .label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .pair-stat .value { font-size: 14px; font-weight: 700; }
 
         .stats-grid {
             display: grid;
@@ -446,38 +480,10 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
+        .stat-label { font-size: 12px; color: var(--text-secondary); }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid var(--border);
-            border-top: 3px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 10px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .pairs-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-align: center;
-        }
+        .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .pairs-count { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; text-align: center; }
 
         .toast {
             position: fixed;
@@ -497,14 +503,11 @@
             white-space: nowrap;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .toast.success { border-color: var(--success); background: rgba(34, 197, 94, 0.1); color: var(--success); }
-        .toast.error { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { border-color: var(--success); background: rgba(34,197,94,0.1); color: var(--success); }
+        .toast.error { border-color: var(--danger); background: rgba(239,68,68,0.1); color: var(--danger); }
         .toast.turbo { border-color: var(--turbo); background: rgba(255,107,53,0.1); color: var(--turbo); }
+        .toast.credits { border-color: #f59e0b; background: rgba(245,158,11,0.1); color: #f59e0b; }
 
         .hidden { display: none !important; }
         .positive { color: var(--success); }
@@ -527,9 +530,12 @@
         <header class="header">
             <div class="header-content">
                 <h1>💎 CryptoPulse</h1>
-                <div>
-                    <span class="turbo-badge inactive" id="turboBadge">🐢 Обычный режим</span>
-                    <div class="turbo-timer" id="turboTimerDisplay"></div>
+                <div class="header-right">
+                    <span class="credits-badge" id="creditsBadge" onclick="showGetCreditsModal()">🪙 0 кредитов</span>
+                    <div>
+                        <span class="turbo-badge inactive" id="turboBadge">🐢 Обычный режим</span>
+                        <div class="turbo-timer" id="turboTimerDisplay"></div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -556,17 +562,14 @@
             </div>
             <div class="pairs-count" id="pairsCount">Загрузка...</div>
             <div class="coins-list" id="allPairsList">
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <div>Загрузка пар с Binance...</div>
-                </div>
+                <div class="loading">Загрузка пар с Binance...</div>
             </div>
         </div>
 
         <div class="tab-content" id="turboTab">
-            <div class="turbo-panel" id="turboPanel">
+            <div class="turbo-panel">
                 <h3>🚀 Turbo Режим</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 10px;">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
                     Цены и график в реальном времени через WebSocket
                 </p>
                 <div style="margin-bottom: 15px;">
@@ -582,29 +585,19 @@
                     <canvas id="realtimeChart"></canvas>
                 </div>
                 
-                <div class="pair-stats" id="turboPairStats">
-                    <div class="pair-stat">
-                        <div class="label">High 24h</div>
-                        <div class="value" id="turboHigh">--</div>
-                    </div>
-                    <div class="pair-stat">
-                        <div class="label">Low 24h</div>
-                        <div class="value" id="turboLow">--</div>
-                    </div>
-                    <div class="pair-stat">
-                        <div class="label">Volume 24h</div>
-                        <div class="value" id="turboVolume">--</div>
-                    </div>
-                    <div class="pair-stat">
-                        <div class="label">Trades</div>
-                        <div class="value" id="turboTrades">--</div>
-                    </div>
+                <div class="pair-stats">
+                    <div class="pair-stat"><div class="label">High 24h</div><div class="value" id="turboHigh">--</div></div>
+                    <div class="pair-stat"><div class="label">Low 24h</div><div class="value" id="turboLow">--</div></div>
+                    <div class="pair-stat"><div class="label">Volume 24h</div><div class="value" id="turboVolume">--</div></div>
+                    <div class="pair-stat"><div class="label">Trades</div><div class="value" id="turboTrades">--</div></div>
                 </div>
-                <button class="activate-turbo-btn" id="activateTurboBtn" onclick="activateTurboSession()">
-                    🚀 Активировать Turbo (15 мин)
+                
+                <!-- Кнопки Turbo -->
+                <button class="btn btn-primary" id="activateTurboBtn" onclick="showTurboPackageModal()">
+                    🚀 Активировать Turbo
                 </button>
-                <button class="stop-turbo-btn hidden" id="stopTurboBtn" onclick="stopTurboWebSocket()">
-                    ⏹ Остановить Turbo
+                <button class="btn btn-ad hidden" id="watchAdBtn" onclick="watchRewardedAd()">
+                    📺 Заработать кредиты (просмотр рекламы)
                 </button>
             </div>
         </div>
@@ -621,19 +614,93 @@
 
         <div class="tab-content" id="profileTab">
             <div class="stat-card" style="margin-bottom: 16px;">
-                <div class="stat-value" id="watchlistCount">0</div>
-                <div class="stat-label">Отслеживаемых пар</div>
+                <div class="stat-value" id="totalCreditsSpent">0</div>
+                <div class="stat-label">Кредитов потрачено</div>
             </div>
             <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="watchlistCount">0</div>
+                    <div class="stat-label">Отслеживаемых пар</div>
+                </div>
                 <div class="stat-card">
                     <div class="stat-value" id="turboSessionsCount">0</div>
                     <div class="stat-label">Turbo сессий</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalPairsCount">0</div>
-                    <div class="stat-label">Всего пар на Binance</div>
+            </div>
+            <button class="btn btn-ad" onclick="showGetCreditsModal()" style="margin-top: 16px;">
+                📺 Заработать кредиты
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно выбора пакета Turbo -->
+    <div class="modal-overlay" id="turboPackageModal">
+        <div class="modal-dialog">
+            <h3>🚀 Выберите длительность Turbo</h3>
+            <p class="subtitle">Ваш баланс: <strong id="modalCreditsBalance">0 кредитов</strong></p>
+            <div class="package-list">
+                <div class="package-card" data-package="15" onclick="selectPackage(15)">
+                    <div class="package-header">
+                        <span class="package-name">⚡ Короткий</span>
+                        <span class="package-price">5 🪙</span>
+                    </div>
+                    <div class="package-desc">15 минут Turbo • 1 реклама для получения</div>
+                </div>
+                <div class="package-card" data-package="30" onclick="selectPackage(30)">
+                    <span class="package-best">Популярный</span>
+                    <div class="package-header">
+                        <span class="package-name">🔥 Стандартный</span>
+                        <span class="package-price">10 🪙</span>
+                    </div>
+                    <div class="package-desc">30 минут Turbo • 2 рекламы для получения</div>
+                </div>
+                <div class="package-card" data-package="60" onclick="selectPackage(60)">
+                    <span class="package-best">Выгодно</span>
+                    <div class="package-header">
+                        <span class="package-name">💎 Длинный</span>
+                        <span class="package-price">15 🪙</span>
+                    </div>
+                    <div class="package-desc">60 минут Turbo • 3 рекламы для получения</div>
                 </div>
             </div>
+            <button class="btn btn-primary" id="confirmTurboBtn" disabled onclick="confirmTurboActivation()">
+                🚀 Активировать Turbo
+            </button>
+            <button class="btn btn-ad" onclick="watchAdFromModal()">
+                📺 +5 кредитов (просмотр рекламы)
+            </button>
+            <button class="btn btn-secondary" onclick="closeTurboPackageModal()">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно заработка кредитов -->
+    <div class="modal-overlay" id="getCreditsModal">
+        <div class="modal-dialog">
+            <h3>🪙 Заработать кредиты</h3>
+            <p class="subtitle">Ваш баланс: <strong id="getCreditsBalance">0 кредитов</strong></p>
+            <p style="text-align: center; margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
+                Смотрите короткую рекламу и получайте кредиты для активации Turbo режима.
+            </p>
+            <div class="package-list">
+                <div class="package-card" style="border-color: #22c55e;">
+                    <div class="package-header">
+                        <span class="package-name">📺 1 реклама</span>
+                        <span class="package-price" style="color: #22c55e;">+5 🪙</span>
+                    </div>
+                    <div class="package-desc">30 секунд = 15 минут Turbo</div>
+                </div>
+                <div class="package-card" style="border-color: #22c55e;">
+                    <div class="package-header">
+                        <span class="package-name">📺📺📺 3 рекламы</span>
+                        <span class="package-price" style="color: #22c55e;">+15 🪙</span>
+                    </div>
+                    <div class="package-desc">3 × 30 секунд = 60 минут Turbo (скидка 0%)</div>
+                </div>
+            </div>
+            <button class="btn btn-ad" onclick="watchRewardedAd()">
+                📺 Посмотреть рекламу (+5 🪙)
+            </button>
+            <button class="btn btn-secondary" onclick="closeGetCreditsModal()">Закрыть</button>
         </div>
     </div>
 
@@ -651,15 +718,13 @@
     let currentFilter = 'all';
     let searchQuery = '';
     
-    // WebSocket соединения
+    // WebSocket
     let cryptoSocket = null;
     let klineSocket = null;
-    
-    // ID для проверки актуальности соединения
     let activeSymbol = null;
     let socketId = 0;
     
-    // Turbo состояние
+    // Turbo
     let turboTimer = null;
     let turboEndTime = null;
     let turboUpdateInterval = null;
@@ -668,18 +733,29 @@
     let realtimeChart = null;
     let chartData = [];
     
-    // Избранное и статистика
-    let watchlist = [];
+    // Кредитная система
+    let userCredits = 0;
+    let selectedPackage = null;
     let turboSessionsCount = 0;
+    let totalCreditsSpent = 0;
+    let adsWatchedToday = 0;
+    
+    // Избранное
+    let watchlist = [];
+
+    const PACKAGES = {
+        15: { credits: 5, minutes: 15, name: 'Короткий' },
+        30: { credits: 10, minutes: 30, name: 'Стандартный' },
+        60: { credits: 15, minutes: 60, name: 'Длинный' }
+    };
 
     const QUOTE_SYMBOLS = {
         'USDT': '💲', 'USDC': '💲', 'BUSD': '💲', 'FDUSD': '💲', 'TUSD': '💲',
-        'BTC': '₿', 'ETH': '⟠', 'BNB': '🟡', 'XRP': '💧', 'DOGE': '🐕',
-        'SOL': '◎', 'ADA': '🔷', 'DOT': '⚫', 'MATIC': '🟣'
+        'BTC': '₿', 'ETH': '⟠', 'BNB': '🟡'
     };
 
     document.addEventListener('DOMContentLoaded', async () => {
-        console.log('CryptoPulse initializing...');
+        console.log('CryptoPulse with Credits System initializing...');
         
         if (tg) {
             tg.ready();
@@ -688,9 +764,29 @@
             tg.setBackgroundColor('#0f1419');
         }
         
+        // Загружаем данные
+        userCredits = getStorage('credits', 0);
         watchlist = getStorage('watchlist', []);
         turboSessionsCount = getStorage('turbo_sessions', 0);
+        totalCreditsSpent = getStorage('total_credits_spent', 0);
         
+        // Сбрасываем счётчик рекламы если новый день
+        const today = new Date().toDateString();
+        const lastAdDate = getStorage('last_ad_date', '');
+        if (lastAdDate !== today) {
+            adsWatchedToday = 0;
+            setStorage('last_ad_date', today);
+        } else {
+            adsWatchedToday = getStorage('ads_watched_today', 0);
+        }
+        
+        updateCreditsDisplay();
+        updateAllUI();
+        initNavigation();
+        initSearch();
+        initFilterChips();
+        
+        // Проверяем сохранённый Turbo
         const savedTurbo = getStorage('turbo_state', null);
         if (savedTurbo && savedTurbo.endTime > Date.now()) {
             const remainingMs = savedTurbo.endTime - Date.now();
@@ -700,11 +796,7 @@
             startTurboTimer(remainingMinutes);
         }
         
-        initNavigation();
-        initSearch();
-        initFilterChips();
         await loadAllPairs();
-        updateAllUI();
     });
 
     function getStorage(key, def) {
@@ -717,10 +809,170 @@
         catch (e) {}
     }
 
+    function updateCreditsDisplay() {
+        document.getElementById('creditsBadge').textContent = `🪙 ${userCredits} кредитов`;
+        document.getElementById('modalCreditsBalance').textContent = `${userCredits} кредитов`;
+        document.getElementById('getCreditsBalance').textContent = `${userCredits} кредитов`;
+    }
+
     function updateAllUI() {
         document.getElementById('watchlistCount').textContent = watchlist.length;
         document.getElementById('turboSessionsCount').textContent = turboSessionsCount;
-        document.getElementById('totalPairsCount').textContent = allPairs.length;
+        document.getElementById('totalCreditsSpent').textContent = totalCreditsSpent;
+    }
+
+    // ============ МОДАЛЬНЫЕ ОКНА ============
+    function showTurboPackageModal() {
+        if (activeSymbol) {
+            showToast('Turbo уже активен!', 'error');
+            return;
+        }
+        
+        const symbol = document.getElementById('turboSymbolInput').value.trim().toUpperCase();
+        if (!symbol) {
+            showToast('Введите символ пары', 'error');
+            return;
+        }
+        
+        if (!allPairs.find(p => p.symbol === symbol)) {
+            showToast(`Пара ${symbol} не найдена`, 'error');
+            return;
+        }
+        
+        selectedPackage = null;
+        document.querySelectorAll('#turboPackageModal .package-card').forEach(c => c.classList.remove('selected', 'disabled'));
+        
+        // Проверяем какие пакеты доступны
+        document.querySelectorAll('#turboPackageModal .package-card[data-package]').forEach(card => {
+            const minutes = parseInt(card.dataset.package);
+            const pkg = PACKAGES[minutes];
+            if (userCredits < pkg.credits) {
+                card.classList.add('disabled');
+            }
+        });
+        
+        updateCreditsDisplay();
+        document.getElementById('confirmTurboBtn').disabled = true;
+        document.getElementById('turboPackageModal').classList.add('active');
+    }
+
+    function closeTurboPackageModal() {
+        document.getElementById('turboPackageModal').classList.remove('active');
+        selectedPackage = null;
+    }
+
+    function selectPackage(minutes) {
+        const pkg = PACKAGES[minutes];
+        if (userCredits < pkg.credits) {
+            showToast(`Недостаточно кредитов. Нужно ${pkg.credits} 🪙`, 'error');
+            return;
+        }
+        
+        document.querySelectorAll('#turboPackageModal .package-card[data-package]').forEach(c => c.classList.remove('selected'));
+        document.querySelector(`#turboPackageModal .package-card[data-package="${minutes}"]`).classList.add('selected');
+        
+        selectedPackage = minutes;
+        document.getElementById('confirmTurboBtn').disabled = false;
+    }
+
+    function confirmTurboActivation() {
+        if (!selectedPackage) return;
+        
+        const pkg = PACKAGES[selectedPackage];
+        if (userCredits < pkg.credits) {
+            showToast('Недостаточно кредитов', 'error');
+            return;
+        }
+        
+        // Списываем кредиты
+        userCredits -= pkg.credits;
+        totalCreditsSpent += pkg.credits;
+        setStorage('credits', userCredits);
+        setStorage('total_credits_spent', totalCreditsSpent);
+        
+        // Активируем Turbo
+        const symbol = document.getElementById('turboSymbolInput').value.trim().toUpperCase();
+        switchToPair(symbol);
+        startTurboTimer(pkg.minutes);
+        
+        turboSessionsCount++;
+        setStorage('turbo_sessions', turboSessionsCount);
+        
+        // Сохраняем состояние
+        const endTime = Date.now() + pkg.minutes * 60 * 1000;
+        setStorage('turbo_state', {
+            symbol: symbol.toLowerCase(),
+            endTime: endTime,
+            duration: pkg.minutes
+        });
+        
+        closeTurboPackageModal();
+        updateCreditsDisplay();
+        updateAllUI();
+        applyCurrentFilters();
+        
+        showToast(`🚀 Turbo активирован на ${pkg.minutes} мин!`, 'turbo');
+    }
+
+    function showGetCreditsModal() {
+        updateCreditsDisplay();
+        document.getElementById('getCreditsModal').classList.add('active');
+    }
+
+    function closeGetCreditsModal() {
+        document.getElementById('getCreditsModal').classList.remove('active');
+    }
+
+    // ============ СИМУЛЯЦИЯ РЕКЛАМЫ ============
+    function watchRewardedAd() {
+        // В реальном приложении здесь была бы интеграция с рекламной сетью
+        // Сейчас симулируем просмотр рекламы
+        
+        if (adsWatchedToday >= 20) {
+            showToast('Лимит рекламы на сегодня (20)', 'error');
+            return;
+        }
+        
+        showToast('📺 Загрузка рекламы...', 'info');
+        
+        // Симуляция 3-секундной задержки (в реальности 30 секунд)
+        setTimeout(() => {
+            userCredits += 5;
+            adsWatchedToday++;
+            
+            setStorage('credits', userCredits);
+            setStorage('ads_watched_today', adsWatchedToday);
+            
+            updateCreditsDisplay();
+            showToast('✅ +5 кредитов! Можете активировать Turbo', 'credits');
+            
+            // Обновляем модальное окно если открыто
+            if (document.getElementById('turboPackageModal').classList.contains('active')) {
+                document.querySelectorAll('#turboPackageModal .package-card[data-package]').forEach(card => {
+                    const minutes = parseInt(card.dataset.package);
+                    const pkg = PACKAGES[minutes];
+                    if (userCredits >= pkg.credits) {
+                        card.classList.remove('disabled');
+                    }
+                });
+                updateCreditsDisplay();
+            }
+            
+            if (document.getElementById('getCreditsModal').classList.contains('active')) {
+                updateCreditsDisplay();
+            }
+        }, 3000);
+    }
+
+    function watchAdFromModal() {
+        closeTurboPackageModal();
+        watchRewardedAd();
+        // Открываем заново после получения кредитов
+        setTimeout(() => {
+            if (!activeSymbol) {
+                showTurboPackageModal();
+            }
+        }, 3500);
     }
 
     // ============ НАВИГАЦИЯ ============
@@ -739,30 +991,19 @@
 
     // ============ ЗАГРУЗКА ПАР ============
     async function loadAllPairs() {
-        const container = document.getElementById('allPairsList');
-        container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Загрузка пар с Binance...</div></div>';
-        
         try {
             const exchangeInfo = await fetch(`${BINANCE_API}/exchangeInfo`).then(r => r.json());
-            
             allPairs = exchangeInfo.symbols
                 .filter(s => s.status === 'TRADING' && s.isSpotTradingAllowed)
-                .map(s => ({
-                    symbol: s.symbol,
-                    baseAsset: s.baseAsset,
-                    quoteAsset: s.quoteAsset
-                }));
+                .map(s => ({ symbol: s.symbol, baseAsset: s.baseAsset, quoteAsset: s.quoteAsset }));
             
-            console.log(`Загружено ${allPairs.length} пар`);
             document.getElementById('pairsCount').textContent = `Всего пар: ${allPairs.length}`;
-            
             await loadAllPrices();
             filteredPairs = [...allPairs];
             applyCurrentFilters();
             updateAllUI();
         } catch (e) {
-            console.error('Ошибка:', e);
-            container.innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
+            document.getElementById('allPairsList').innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
         }
     }
 
@@ -782,12 +1023,9 @@
                     };
                 }
             });
-        } catch (e) {
-            console.error('Ошибка цен:', e);
-        }
+        } catch (e) {}
     }
 
-    // ============ ПОИСК И ФИЛЬТРАЦИЯ ============
     function initSearch() {
         const input = document.getElementById('pairSearchInput');
         let timer;
@@ -813,7 +1051,6 @@
 
     function applyCurrentFilters() {
         let result = [...allPairs];
-        
         if (['USDT', 'BTC', 'ETH', 'BNB', 'FDUSD'].includes(currentFilter)) {
             result = result.filter(p => p.quoteAsset === currentFilter);
         } else if (currentFilter === 'gainers') {
@@ -822,25 +1059,16 @@
         } else if (currentFilter === 'volume') {
             result.sort((a, b) => (pairPrices[b.symbol]?.quoteVolume || 0) - (pairPrices[a.symbol]?.quoteVolume || 0));
         }
-        
         if (searchQuery) {
-            result = result.filter(p => 
-                p.symbol.toLowerCase().includes(searchQuery) ||
-                p.baseAsset.toLowerCase().includes(searchQuery) ||
-                p.quoteAsset.toLowerCase().includes(searchQuery)
-            );
+            result = result.filter(p => p.symbol.toLowerCase().includes(searchQuery) || p.baseAsset.toLowerCase().includes(searchQuery));
         }
-        
         filteredPairs = result;
         renderPairsList(filteredPairs);
-        document.getElementById('pairsCount').textContent = 
-            `Всего пар: ${allPairs.length} | Показано: ${filteredPairs.length}`;
+        document.getElementById('pairsCount').textContent = `Всего пар: ${allPairs.length} | Показано: ${filteredPairs.length}`;
     }
 
-    // ============ ФОРМАТИРОВАНИЕ ============
-    function getQuoteIcon(quoteAsset) {
-        return QUOTE_SYMBOLS[quoteAsset] || quoteAsset.charAt(0);
-    }
+    function getQuoteIcon(q) { return QUOTE_SYMBOLS[q] || q.charAt(0); }
+    function getPricePrefix(q) { return ['USDT','USDC','BUSD','FDUSD','TUSD'].includes(q) ? '$' : ''; }
 
     function formatPriceForPair(price, pair) {
         if (price == null || isNaN(price)) return '0.00';
@@ -859,113 +1087,51 @@
         return price.toFixed(6);
     }
 
-    function getPricePrefix(quoteAsset) {
-        return ['USDT', 'USDC', 'BUSD', 'FDUSD', 'TUSD'].includes(quoteAsset) ? '$' : '';
-    }
-
-    // ============ РЕНДЕРИНГ СПИСКА ============
     function renderPairsList(pairs) {
         const container = document.getElementById('allPairsList');
-        if (!pairs.length) {
-            container.innerHTML = '<div class="loading">😕 Пары не найдены</div>';
-            return;
-        }
+        if (!pairs.length) { container.innerHTML = '<div class="loading">😕 Пары не найдены</div>'; return; }
         
         const displayPairs = pairs.slice(0, 200);
-        const isTurboActive = activeSymbol !== null;
-        
         container.innerHTML = displayPairs.map(pair => {
-            const priceData = pairPrices[pair.symbol];
-            const price = priceData?.price || 0;
-            const change = priceData?.change || 0;
+            const pd = pairPrices[pair.symbol];
+            const price = pd?.price || 0;
+            const change = pd?.change || 0;
             const isWatched = watchlist.includes(pair.symbol);
             const isTracking = activeSymbol === pair.symbol.toLowerCase();
             const changeClass = change >= 0 ? 'positive' : 'negative';
-            const quoteIcon = getQuoteIcon(pair.quoteAsset);
-            const pricePrefix = getPricePrefix(pair.quoteAsset);
+            const maxVol = Math.max(...Object.values(pairPrices).map(p => p.quoteVolume || 0), 1);
+            const volPercent = Math.min(((pd?.quoteVolume || 0) / maxVol) * 100, 100);
             
-            const maxVolume = Math.max(...Object.values(pairPrices).map(p => p.quoteVolume || 0), 1);
-            const volumePercent = Math.min(((priceData?.quoteVolume || 0) / maxVolume) * 100, 100);
-            
-            return `
-            <div class="coin-card ${isTracking ? 'tracking' : ''}" onclick="selectPairForTurbo('${pair.symbol}')">
+            return `<div class="coin-card ${isTracking ? 'tracking' : ''}" onclick="selectPairForTurbo('${pair.symbol}')">
                 <div class="coin-symbol-box">${pair.baseAsset}</div>
-                <div class="coin-info">
-                    <div class="coin-name">${pair.baseAsset}/${pair.quoteAsset}</div>
-                    <div class="coin-pair">${pair.symbol}</div>
-                    <div class="volume-indicator">
-                        <div class="volume-bar">
-                            <div class="volume-bar-fill" style="width: ${volumePercent}%"></div>
-                        </div>
-                    </div>
-                </div>
+                <div class="coin-info"><div class="coin-name">${pair.baseAsset}/${pair.quoteAsset}</div><div class="coin-pair">${pair.symbol}</div></div>
                 <div class="coin-price-section">
-                    <div class="coin-price">
-                        <span class="price-quote-icon">${quoteIcon}</span>
-                        ${pricePrefix}${formatPriceForPair(price, pair)}
-                    </div>
+                    <div class="coin-price"><span class="price-quote-icon">${getQuoteIcon(pair.quoteAsset)}</span>${getPricePrefix(pair.quoteAsset)}${formatPriceForPair(price, pair)}</div>
                     <div class="coin-change ${changeClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</div>
                 </div>
-                <button class="watchlist-btn" 
-                        onclick="event.stopPropagation(); toggleWatchlist('${pair.symbol}')"
-                        style="background:none;border:none;color:${isWatched ? '#f59e0b' : 'var(--text-secondary)'};font-size:20px;cursor:pointer;padding:4px;">
-                    ${isWatched ? '⭐' : '☆'}
-                </button>
+                <button style="background:none;border:none;color:${isWatched ? '#f59e0b' : 'var(--text-secondary)'};font-size:20px;cursor:pointer;padding:4px;" onclick="event.stopPropagation();toggleWatchlist('${pair.symbol}')">${isWatched ? '⭐' : '☆'}</button>
             </div>`;
         }).join('');
         
-        if (pairs.length > 200) {
-            container.innerHTML += `<div class="loading" style="padding:20px;">Показано 200 из ${pairs.length} пар. Уточните поиск.</div>`;
-        }
+        if (pairs.length > 200) container.innerHTML += '<div class="loading" style="padding:20px;">Показано 200 из ' + pairs.length + ' пар</div>';
     }
 
     // ============ ПЕРЕКЛЮЧЕНИЕ ПАРЫ ============
     function switchToPair(symbol) {
         const normalizedSymbol = symbol.toLowerCase();
+        if (activeSymbol === normalizedSymbol) return;
         
-        // Если та же пара, не переподключаем
-        if (activeSymbol === normalizedSymbol) {
-            console.log('Та же пара, пропускаем переподключение');
-            return;
-        }
-        
-        console.log(`Переключение с "${activeSymbol}" на "${normalizedSymbol}"`);
-        
-        // Увеличиваем ID для отслеживания устаревших соединений
         socketId++;
         const currentSocketId = socketId;
         
-        // Закрываем старые соединения
-        closeAllSockets();
+        if (cryptoSocket) { cryptoSocket.onmessage = null; cryptoSocket.onclose = null; cryptoSocket.close(); cryptoSocket = null; }
+        if (klineSocket) { klineSocket.onmessage = null; klineSocket.onclose = null; klineSocket.close(); klineSocket = null; }
         
-        // Очищаем данные графика
         chartData = [];
-        if (realtimeChart) {
-            realtimeChart.destroy();
-            realtimeChart = null;
-        }
+        if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
         
-        // Очищаем отображение
-        clearTurboDisplay();
-        
-        // Устанавливаем новый активный символ
         activeSymbol = normalizedSymbol;
         document.getElementById('turboSymbolInput').value = symbol.toUpperCase();
-        
-        // Запускаем новые соединения с проверкой ID
-        startTurboWebSocket(symbol, currentSocketId);
-        startKlineWebSocket(symbol, currentSocketId);
-        
-        // Обновляем UI
-        updateTurboUIStatus(true);
-        document.getElementById('activateTurboBtn').classList.add('hidden');
-        document.getElementById('stopTurboBtn').classList.remove('hidden');
-        
-        // Обновляем список пар
-        applyCurrentFilters();
-    }
-
-    function clearTurboDisplay() {
         document.getElementById('livePrice').textContent = '--';
         document.getElementById('liveChange').textContent = '--';
         document.getElementById('liveChange').className = 'live-change positive';
@@ -974,308 +1140,105 @@
         document.getElementById('turboVolume').textContent = '--';
         document.getElementById('turboTrades').textContent = '--';
         
-        // Очищаем canvas графика
-        const canvas = document.getElementById('realtimeChart');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-
-    function closeAllSockets() {
-        if (cryptoSocket) {
-            cryptoSocket.onmessage = null; // Убираем обработчик
-            cryptoSocket.onclose = null;
-            cryptoSocket.close();
-            cryptoSocket = null;
-        }
-        if (klineSocket) {
-            klineSocket.onmessage = null;
-            klineSocket.onclose = null;
-            klineSocket.close();
-            klineSocket = null;
-        }
-    }
-
-    // ============ TURBO WEBSOCKET (ЦЕНА) ============
-    function startTurboWebSocket(symbol, connectionId) {
-        const streamUrl = `${BINANCE_WS_BASE}/${symbol.toLowerCase()}@ticker`;
-        console.log(`[WS Ticker #${connectionId}] Подключение: ${symbol}`);
+        startTurboWebSocket(symbol, currentSocketId);
+        startKlineWebSocket(symbol, currentSocketId);
         
-        const ws = new WebSocket(streamUrl);
-        cryptoSocket = ws;
+        updateTurboUIStatus(true);
+        document.getElementById('activateTurboBtn').classList.add('hidden');
+        document.getElementById('watchAdBtn').classList.add('hidden');
+        applyCurrentFilters();
+    }
 
+    function startTurboWebSocket(symbol, connectionId) {
+        const ws = new WebSocket(`${BINANCE_WS_BASE}/${symbol.toLowerCase()}@ticker`);
+        cryptoSocket = ws;
+        
         ws.onopen = () => {
-            console.log(`[WS Ticker #${connectionId}] Открыт для ${symbol}`);
-            // Проверяем, не устарело ли соединение
-            if (connectionId !== socketId) {
-                console.log(`[WS Ticker #${connectionId}] Соединение устарело, закрываем`);
-                ws.close();
-                return;
-            }
+            if (connectionId !== socketId) { ws.close(); return; }
             showToast(`🚀 Turbo: ${symbol.toUpperCase()}`, 'turbo');
         };
-
+        
         ws.onmessage = (event) => {
-            // Игнорируем сообщения от устаревших соединений
-            if (connectionId !== socketId) {
-                return;
-            }
-            
+            if (connectionId !== socketId) return;
             try {
                 const data = JSON.parse(event.data);
-                // Дополнительная проверка что данные для текущей пары
                 if (data.s && data.s.toLowerCase() === activeSymbol) {
                     renderTurboUpdate(data);
-                    
-                    // Обновляем кеш
                     if (pairPrices[data.s]) {
                         pairPrices[data.s].price = parseFloat(data.c);
                         pairPrices[data.s].change = parseFloat(data.P);
                     }
                 }
-            } catch (e) {
-                console.error('[WS Ticker] Parse error:', e);
-            }
+            } catch (e) {}
         };
-
-        ws.onerror = (error) => {
-            console.error(`[WS Ticker #${connectionId}] Error:`, error);
-        };
-
-        ws.onclose = (event) => {
-            console.log(`[WS Ticker #${connectionId}] Закрыт:`, event.code);
-            // Переподключаем только если это актуальное соединение и turbo активен
+        
+        ws.onclose = () => {
             if (connectionId === socketId && turboEndTime && Date.now() < turboEndTime) {
-                console.log('Переподключение ticker...');
-                setTimeout(() => {
-                    if (connectionId === socketId) {
-                        startTurboWebSocket(activeSymbol.toUpperCase(), connectionId);
-                    }
-                }, 2000);
+                setTimeout(() => { if (connectionId === socketId) startTurboWebSocket(activeSymbol.toUpperCase(), connectionId); }, 2000);
             }
         };
     }
 
-    // ============ KLINE WEBSOCKET (ГРАФИК) ============
     function startKlineWebSocket(symbol, connectionId) {
-        const streamUrl = `${BINANCE_WS_BASE}/${symbol.toLowerCase()}@kline_1m`;
-        console.log(`[WS Kline #${connectionId}] Подключение: ${symbol}`);
-        
-        const ws = new WebSocket(streamUrl);
+        const ws = new WebSocket(`${BINANCE_WS_BASE}/${symbol.toLowerCase()}@kline_1m`);
         klineSocket = ws;
-
+        
         ws.onopen = () => {
-            console.log(`[WS Kline #${connectionId}] Открыт для ${symbol}`);
-            if (connectionId !== socketId) {
-                ws.close();
-                return;
-            }
-            // Загружаем исторические данные
+            if (connectionId !== socketId) { ws.close(); return; }
             loadHistoricalKlines(symbol, connectionId);
         };
-
+        
         ws.onmessage = (event) => {
             if (connectionId !== socketId) return;
-            
             try {
-                const data = JSON.parse(event.data);
-                const kline = data.k;
-                
+                const kline = JSON.parse(event.data).k;
                 if (kline.x) {
-                    addChartPoint({
-                        time: kline.t,
-                        open: parseFloat(kline.o),
-                        high: parseFloat(kline.h),
-                        low: parseFloat(kline.l),
-                        close: parseFloat(kline.c)
-                    });
+                    addChartPoint({ time: kline.t, open: parseFloat(kline.o), high: parseFloat(kline.h), low: parseFloat(kline.l), close: parseFloat(kline.c) });
                 } else {
-                    updateLastChartPoint({
-                        time: kline.t,
-                        close: parseFloat(kline.c),
-                        high: parseFloat(kline.h),
-                        low: parseFloat(kline.l)
-                    });
+                    updateLastChartPoint({ time: kline.t, close: parseFloat(kline.c), high: parseFloat(kline.h), low: parseFloat(kline.l) });
                 }
-            } catch (e) {
-                console.error('[WS Kline] Parse error:', e);
-            }
-        };
-
-        ws.onclose = () => {
-            console.log(`[WS Kline #${connectionId}] Закрыт`);
+            } catch (e) {}
         };
     }
 
     async function loadHistoricalKlines(symbol, connectionId) {
         try {
-            const res = await fetch(`${BINANCE_API}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=100`);
-            const klines = await res.json();
-            
-            // Проверяем что соединение всё ещё актуально
+            const klines = await fetch(`${BINANCE_API}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=100`).then(r => r.json());
             if (connectionId !== socketId) return;
-            
-            chartData = klines.map(k => ({
-                time: k[0],
-                open: parseFloat(k[1]),
-                high: parseFloat(k[2]),
-                low: parseFloat(k[3]),
-                close: parseFloat(k[4])
-            }));
-            
+            chartData = klines.map(k => ({ time: k[0], open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]) }));
             initRealtimeChart();
-        } catch (e) {
-            console.error('Ошибка загрузки истории:', e);
-            if (connectionId === socketId) {
-                chartData = [];
-                initRealtimeChart();
-            }
-        }
+        } catch (e) { if (connectionId === socketId) { chartData = []; initRealtimeChart(); } }
     }
 
-    function addChartPoint(point) {
-        chartData.push(point);
-        if (chartData.length > 100) chartData.shift();
-        updateChart();
-    }
-
+    function addChartPoint(point) { chartData.push(point); if (chartData.length > 100) chartData.shift(); updateChart(); }
     function updateLastChartPoint(update) {
-        if (chartData.length === 0) return;
+        if (!chartData.length) return;
         const last = chartData[chartData.length - 1];
-        if (last.time === update.time) {
-            last.close = update.close;
-            last.high = Math.max(last.high, update.high);
-            last.low = Math.min(last.low, update.low);
-        }
+        if (last.time === update.time) { last.close = update.close; last.high = Math.max(last.high, update.high); last.low = Math.min(last.low, update.low); }
         updateChart();
     }
 
     function initRealtimeChart() {
         const canvas = document.getElementById('realtimeChart');
         if (!canvas) return;
-
-        if (realtimeChart) {
-            realtimeChart.destroy();
-            realtimeChart = null;
-        }
-
+        if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
+        
         const ctx = canvas.getContext('2d');
-        const labels = chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
-        const prices = chartData.map(d => d.close);
-
         realtimeChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
-                datasets: [{
-                    data: prices,
-                    borderColor: '#ff6b35',
-                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    borderWidth: 2
-                }]
+                labels: chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })),
+                datasets: [{ data: chartData.map(d => d.close), borderColor: '#ff6b35', backgroundColor: 'rgba(255,107,53,0.1)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 0 },
-                interaction: { intersect: false, mode: 'index' },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#1e293b',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#f1f5f9',
-                        borderColor: '#334155',
-                        borderWidth: 1
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: '#334155' },
-                        ticks: { color: '#94a3b8', maxTicksLimit: 8 }
-                    },
-                    y: {
-                        grid: { color: '#334155' },
-                        ticks: { color: '#94a3b8' }
-                    }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
         });
     }
 
     function updateChart() {
-        if (!realtimeChart) {
-            initRealtimeChart();
-            return;
-        }
-        const labels = chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
-        const prices = chartData.map(d => d.close);
-        realtimeChart.data.labels = labels;
-        realtimeChart.data.datasets[0].data = prices;
+        if (!realtimeChart) { initRealtimeChart(); return; }
+        realtimeChart.data.labels = chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+        realtimeChart.data.datasets[0].data = chartData.map(d => d.close);
         realtimeChart.update('none');
-    }
-
-    // ============ АКТИВАЦИЯ TURBO ============
-    function activateTurboSession(durationMinutes = 15) {
-        let symbol = document.getElementById('turboSymbolInput').value.trim().toUpperCase();
-        
-        if (!symbol) {
-            showToast('Введите символ пары', 'error');
-            return;
-        }
-        
-        if (!allPairs.find(p => p.symbol === symbol)) {
-            showToast(`Пара ${symbol} не найдена`, 'error');
-            return;
-        }
-        
-        // Переключаемся на новую пару
-        switchToPair(symbol);
-        
-        // Запускаем таймер
-        startTurboTimer(durationMinutes);
-        
-        // Сохраняем состояние
-        const endTime = Date.now() + durationMinutes * 60 * 1000;
-        setStorage('turbo_state', {
-            symbol: symbol.toLowerCase(),
-            endTime: endTime,
-            duration: durationMinutes
-        });
-        
-        turboSessionsCount++;
-        setStorage('turbo_sessions', turboSessionsCount);
-        document.getElementById('turboSessionsCount').textContent = turboSessionsCount;
-    }
-
-    function stopTurboWebSocket() {
-        closeAllSockets();
-        
-        if (turboTimer) clearTimeout(turboTimer);
-        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
-        
-        if (realtimeChart) {
-            realtimeChart.destroy();
-            realtimeChart = null;
-        }
-        
-        turboEndTime = null;
-        activeSymbol = null;
-        chartData = [];
-        
-        updateTurboUIStatus(false);
-        document.getElementById('activateTurboBtn').classList.remove('hidden');
-        document.getElementById('stopTurboBtn').classList.add('hidden');
-        clearTurboDisplay();
-        
-        setStorage('turbo_state', null);
-        applyCurrentFilters();
-        showToast('Turbo режим остановлен', 'error');
     }
 
     function startTurboTimer(durationMinutes) {
@@ -1302,35 +1265,50 @@
         
         turboTimer = setTimeout(() => {
             stopTurboWebSocket();
-            showToast('⏰ Turbo истек!', 'error');
+            showToast('⏰ Turbo истек! Заработайте кредиты для повторной активации.', 'error');
         }, durationMinutes * 60 * 1000);
+    }
+
+    function stopTurboWebSocket() {
+        if (cryptoSocket) { cryptoSocket.onmessage = null; cryptoSocket.onclose = null; cryptoSocket.close(); cryptoSocket = null; }
+        if (klineSocket) { klineSocket.onmessage = null; klineSocket.onclose = null; klineSocket.close(); klineSocket = null; }
+        if (turboTimer) clearTimeout(turboTimer);
+        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
+        if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
+        
+        turboEndTime = null;
+        activeSymbol = null;
+        chartData = [];
+        
+        updateTurboUIStatus(false);
+        document.getElementById('activateTurboBtn').classList.remove('hidden');
+        document.getElementById('watchAdBtn').classList.remove('hidden');
+        document.getElementById('livePrice').textContent = '--';
+        document.getElementById('liveChange').textContent = '--';
+        document.getElementById('turboTimerInfo').textContent = '';
+        document.getElementById('turboHigh').textContent = '--';
+        document.getElementById('turboLow').textContent = '--';
+        document.getElementById('turboVolume').textContent = '--';
+        document.getElementById('turboTrades').textContent = '--';
+        
+        setStorage('turbo_state', null);
+        applyCurrentFilters();
     }
 
     function renderTurboUpdate(data) {
         const price = parseFloat(data.c);
         const changePercent = parseFloat(data.P);
-        const high = parseFloat(data.h);
-        const low = parseFloat(data.l);
-        const quoteVolume = parseFloat(data.q);
-        const trades = parseInt(data.n);
-        
         const pair = allPairs.find(p => p.symbol === activeSymbol?.toUpperCase());
         if (!pair) return;
         
-        const prefix = getPricePrefix(pair.quoteAsset);
-        const quoteIcon = getQuoteIcon(pair.quoteAsset);
-        
-        document.getElementById('livePrice').textContent = 
-            `${quoteIcon} ${prefix}${formatPriceForPair(price, pair)}`;
-        
+        document.getElementById('livePrice').textContent = `${getQuoteIcon(pair.quoteAsset)} ${getPricePrefix(pair.quoteAsset)}${formatPriceForPair(price, pair)}`;
         const changeEl = document.getElementById('liveChange');
         changeEl.textContent = (changePercent >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
         changeEl.className = 'live-change ' + (changePercent >= 0 ? 'positive' : 'negative');
-        
-        document.getElementById('turboHigh').textContent = prefix + formatPriceForPair(high, pair);
-        document.getElementById('turboLow').textContent = prefix + formatPriceForPair(low, pair);
-        document.getElementById('turboVolume').textContent = formatVolume(quoteVolume);
-        document.getElementById('turboTrades').textContent = trades.toLocaleString();
+        document.getElementById('turboHigh').textContent = getPricePrefix(pair.quoteAsset) + formatPriceForPair(parseFloat(data.h), pair);
+        document.getElementById('turboLow').textContent = getPricePrefix(pair.quoteAsset) + formatPriceForPair(parseFloat(data.l), pair);
+        document.getElementById('turboVolume').textContent = formatVolume(parseFloat(data.q));
+        document.getElementById('turboTrades').textContent = parseInt(data.n).toLocaleString();
     }
 
     function updateTurboUIStatus(isActive) {
@@ -1347,30 +1325,20 @@
 
     function selectPairForTurbo(symbol) {
         document.getElementById('turboSymbolInput').value = symbol;
-        
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelector('[data-tab="turbo"]').classList.add('active');
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById('turboTab').classList.add('active');
         
-        activateTurboSession();
+        // Показываем модальное окно выбора пакета
+        showTurboPackageModal();
     }
 
     // ============ ИЗБРАННОЕ ============
     function toggleWatchlist(symbol) {
         const index = watchlist.indexOf(symbol);
-        if (index > -1) {
-            watchlist.splice(index, 1);
-            showToast(`Удалено: ${symbol}`, 'success');
-        } else {
-            if (watchlist.length >= 50) {
-                showToast('Лимит: 50 пар', 'error');
-                return;
-            }
-            watchlist.push(symbol);
-            showToast(`Добавлено: ${symbol} ⭐`, 'success');
-        }
-        
+        if (index > -1) { watchlist.splice(index, 1); showToast(`Удалено: ${symbol}`, 'success'); }
+        else { if (watchlist.length >= 50) { showToast('Лимит: 50 пар', 'error'); return; } watchlist.push(symbol); showToast(`Добавлено: ${symbol} ⭐`, 'success'); }
         setStorage('watchlist', watchlist);
         updateAllUI();
         applyCurrentFilters();
@@ -1379,52 +1347,27 @@
 
     function clearWatchlist() {
         if (!watchlist.length) return showToast('Избранное пусто', 'error');
-        if (confirm('Удалить все пары из избранного?')) {
-            watchlist = [];
-            setStorage('watchlist', watchlist);
-            updateAllUI();
-            applyCurrentFilters();
-            renderWatchlist();
-            showToast('Избранное очищено', 'success');
-        }
+        if (confirm('Удалить все пары?')) { watchlist = []; setStorage('watchlist', watchlist); updateAllUI(); applyCurrentFilters(); renderWatchlist(); showToast('Избранное очищено', 'success'); }
     }
 
     function renderWatchlist() {
         const container = document.getElementById('watchlistList');
-        if (!watchlist.length) {
-            container.innerHTML = '<div class="loading">⭐ Нет отслеживаемых пар</div>';
-            return;
-        }
+        if (!watchlist.length) { container.innerHTML = '<div class="loading">⭐ Нет отслеживаемых пар</div>'; return; }
         
-        const pairs = watchlist.map(symbol => {
-            return allPairs.find(p => p.symbol === symbol) || { symbol, baseAsset: symbol, quoteAsset: '?' };
-        });
-        
+        const pairs = watchlist.map(s => allPairs.find(p => p.symbol === s) || { symbol: s, baseAsset: s, quoteAsset: '?' });
         container.innerHTML = pairs.map(pair => {
-            const priceData = pairPrices[pair.symbol];
-            const price = priceData?.price || 0;
-            const change = priceData?.change || 0;
+            const pd = pairPrices[pair.symbol];
+            const price = pd?.price || 0;
+            const change = pd?.change || 0;
             const changeClass = change >= 0 ? 'positive' : 'negative';
-            const quoteIcon = getQuoteIcon(pair.quoteAsset);
-            const pricePrefix = getPricePrefix(pair.quoteAsset);
-            
-            return `
-            <div class="coin-card" onclick="selectPairForTurbo('${pair.symbol}')">
+            return `<div class="coin-card" onclick="selectPairForTurbo('${pair.symbol}')">
                 <div class="coin-symbol-box">${pair.baseAsset}</div>
-                <div class="coin-info">
-                    <div class="coin-name">${pair.baseAsset}/${pair.quoteAsset}</div>
-                    <div class="coin-pair">${pair.symbol}</div>
-                </div>
+                <div class="coin-info"><div class="coin-name">${pair.baseAsset}/${pair.quoteAsset}</div><div class="coin-pair">${pair.symbol}</div></div>
                 <div class="coin-price-section">
-                    <div class="coin-price">
-                        <span class="price-quote-icon">${quoteIcon}</span>
-                        ${pricePrefix}${formatPriceForPair(price, pair)}
-                    </div>
+                    <div class="coin-price"><span class="price-quote-icon">${getQuoteIcon(pair.quoteAsset)}</span>${getPricePrefix(pair.quoteAsset)}${formatPriceForPair(price, pair)}</div>
                     <div class="coin-change ${changeClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</div>
                 </div>
-                <button class="watchlist-btn in-watchlist" 
-                        onclick="event.stopPropagation(); toggleWatchlist('${pair.symbol}')"
-                        style="background:none;border:none;color:#f59e0b;font-size:20px;cursor:pointer;">⭐</button>
+                <button style="background:none;border:none;color:#f59e0b;font-size:20px;cursor:pointer;" onclick="event.stopPropagation();toggleWatchlist('${pair.symbol}')">⭐</button>
             </div>`;
         }).join('');
     }
@@ -1445,14 +1388,19 @@
         toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
+    // Закрытие модальных окон по клику на оверлей
+    document.getElementById('turboPackageModal').addEventListener('click', function(e) { if (e.target === this) closeTurboPackageModal(); });
+    document.getElementById('getCreditsModal').addEventListener('click', function(e) { if (e.target === this) closeGetCreditsModal(); });
+
     window.addEventListener('beforeunload', () => {
-        closeAllSockets();
+        if (cryptoSocket) cryptoSocket.close();
+        if (klineSocket) klineSocket.close();
         if (turboTimer) clearTimeout(turboTimer);
         if (turboUpdateInterval) clearInterval(turboUpdateInterval);
         if (realtimeChart) realtimeChart.destroy();
     });
 
-    console.log('✅ CryptoPulse готов');
+    console.log('✅ CryptoPulse с кредитной системой готов');
     </script>
 </body>
 </html>
