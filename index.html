@@ -9,6 +9,9 @@
 
     <title>CryptoPulse Turbo</title>
 
+    <!-- Рекламная сеть -->
+    <script src='//libtl.com/sdk.js' data-zone='11517321' data-sdk='show_11517321'></script>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -297,6 +300,20 @@
         .btn-ad:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .btn-ad.loading {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .ad-status {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 8px;
         }
 
         .turbo-panel {
@@ -665,9 +682,10 @@
             <button class="btn btn-primary" id="confirmTurboBtn" disabled onclick="confirmTurboActivation()">
                 🚀 Активировать Turbo
             </button>
-            <button class="btn btn-ad" onclick="watchAdFromModal()">
+            <button class="btn btn-ad" id="modalAdBtn" onclick="watchAdFromModal()">
                 🪙 +5 кредитов (просмотр рекламы)
             </button>
+            <div class="ad-status hidden" id="modalAdStatus">⏳ Загрузка рекламы...</div>
             <button class="btn btn-secondary" onclick="closeTurboPackageModal()">Отмена</button>
         </div>
     </div>
@@ -678,7 +696,7 @@
             <h3>🪙 Заработать кредиты</h3>
             <p class="subtitle">Ваш баланс: <strong id="getCreditsBalance">0 кредитов</strong></p>
             <p style="text-align: center; margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
-                Просмотр рекламы = кредиты для Turbo режима.<br>
+                Посмотрите короткую рекламу и получите кредиты для Turbo режима.<br>
                 1 реклама = 5 кредитов = 15 минут Turbo
             </p>
             <div class="package-list">
@@ -697,9 +715,10 @@
                     <div class="package-desc">≈ 90 секунд • 60 минут Turbo</div>
                 </div>
             </div>
-            <button class="btn btn-ad" onclick="watchRewardedAd()">
+            <button class="btn btn-ad" id="creditsAdBtn" onclick="watchRewardedAd()">
                 🪙 Посмотреть рекламу (+5 кредитов)
             </button>
+            <div class="ad-status hidden" id="creditsAdStatus">⏳ Загрузка рекламы...</div>
             <button class="btn btn-secondary" onclick="closeGetCreditsModal()">Закрыть</button>
         </div>
     </div>
@@ -735,6 +754,7 @@
     let turboSessionsCount = 0;
     let totalCreditsSpent = 0;
     let adsWatchedToday = 0;
+    let isAdLoading = false;
     
     let watchlist = [];
 
@@ -749,8 +769,14 @@
         'BTC': '₿', 'ETH': '⟠', 'BNB': '🟡'
     };
 
+    // Проверка доступности рекламного SDK
+    function isAdSDKAvailable() {
+        return typeof show_11517321 === 'function';
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
         console.log('CryptoPulse initializing...');
+        console.log('Ad SDK available:', isAdSDKAvailable());
         
         if (tg) {
             tg.ready();
@@ -801,14 +827,12 @@
         catch (e) {}
     }
 
-    // Форматирование символа для отображения: BTCUSDT -> BTC/USDT
     function formatSymbolForDisplay(symbol) {
         const pair = allPairs.find(p => p.symbol === symbol.toUpperCase());
         if (pair) return pair.baseAsset + '/' + pair.quoteAsset;
         return symbol.toUpperCase();
     }
 
-    // Извлечение чистого символа: BTC/USDT -> BTCUSDT
     function parseSymbolInput(input) {
         return input.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
     }
@@ -823,6 +847,131 @@
         document.getElementById('watchlistCount').textContent = watchlist.length;
         document.getElementById('turboSessionsCount').textContent = turboSessionsCount;
         document.getElementById('totalCreditsSpent').textContent = totalCreditsSpent;
+    }
+
+    // ============ РЕКЛАМА ============
+    function setAdLoading(loading, source) {
+        isAdLoading = loading;
+        
+        const modalBtn = document.getElementById('modalAdBtn');
+        const creditsBtn = document.getElementById('creditsAdBtn');
+        const modalStatus = document.getElementById('modalAdStatus');
+        const creditsStatus = document.getElementById('creditsAdStatus');
+        
+        if (loading) {
+            if (modalBtn) { modalBtn.disabled = true; modalBtn.classList.add('loading'); modalBtn.textContent = '⏳ Загрузка рекламы...'; }
+            if (creditsBtn) { creditsBtn.disabled = true; creditsBtn.classList.add('loading'); creditsBtn.textContent = '⏳ Загрузка рекламы...'; }
+            if (modalStatus) modalStatus.classList.remove('hidden');
+            if (creditsStatus) creditsStatus.classList.remove('hidden');
+        } else {
+            if (modalBtn) { modalBtn.disabled = false; modalBtn.classList.remove('loading'); modalBtn.textContent = '🪙 +5 кредитов (просмотр рекламы)'; }
+            if (creditsBtn) { creditsBtn.disabled = false; creditsBtn.classList.remove('loading'); creditsBtn.textContent = '🪙 Посмотреть рекламу (+5 кредитов)'; }
+            if (modalStatus) modalStatus.classList.add('hidden');
+            if (creditsStatus) creditsStatus.classList.add('hidden');
+        }
+    }
+
+    function grantCredits(amount) {
+        userCredits += amount;
+        adsWatchedToday++;
+        
+        setStorage('credits', userCredits);
+        setStorage('ads_watched_today', adsWatchedToday);
+        
+        updateCreditsDisplay();
+        showToast(`+${amount} кредитов!`, 'credits');
+        
+        // Обновляем доступность пакетов в модальном окне
+        if (document.getElementById('turboPackageModal').classList.contains('active')) {
+            document.querySelectorAll('#turboPackageModal .package-card[data-package]').forEach(card => {
+                const minutes = parseInt(card.dataset.package);
+                if (userCredits >= PACKAGES[minutes].credits) {
+                    card.classList.remove('disabled');
+                }
+            });
+            updateCreditsDisplay();
+        }
+        
+        if (document.getElementById('getCreditsModal').classList.contains('active')) {
+            updateCreditsDisplay();
+        }
+    }
+
+    async function watchRewardedAd() {
+        if (isAdLoading) {
+            showToast('Реклама уже загружается...', 'info');
+            return;
+        }
+        
+        if (adsWatchedToday >= 20) {
+            showToast('Лимит рекламы на сегодня (20)', 'error');
+            return;
+        }
+        
+        if (!isAdSDKAvailable()) {
+            // Fallback: симуляция если SDK не загрузился
+            showToast('Рекламный SDK не загружен. Демо-режим.', 'info');
+            setAdLoading(true);
+            
+            setTimeout(() => {
+                setAdLoading(false);
+                grantCredits(5);
+            }, 3000);
+            return;
+        }
+        
+        setAdLoading(true);
+        
+        try {
+            // Вызов реальной rewarded interstitial рекламы
+            await show_11517321();
+            
+            // Этот код выполнится после просмотра рекламы пользователем
+            setAdLoading(false);
+            grantCredits(5);
+            
+        } catch (error) {
+            console.error('Ошибка рекламы:', error);
+            setAdLoading(false);
+            showToast('Ошибка загрузки рекламы. Попробуйте позже.', 'error');
+        }
+    }
+
+    async function watchAdFromModal() {
+        closeTurboPackageModal();
+        
+        // Сохраняем флаг что нужно открыть модальное окно после рекламы
+        const shouldReopenModal = true;
+        
+        if (!isAdSDKAvailable()) {
+            // Fallback
+            setAdLoading(true);
+            setTimeout(() => {
+                setAdLoading(false);
+                grantCredits(5);
+                if (shouldReopenModal && !activeSymbol) {
+                    setTimeout(() => showTurboPackageModal(), 500);
+                }
+            }, 3000);
+            return;
+        }
+        
+        setAdLoading(true);
+        
+        try {
+            await show_11517321();
+            setAdLoading(false);
+            grantCredits(5);
+            
+            // Открываем модальное окно снова
+            if (!activeSymbol) {
+                setTimeout(() => showTurboPackageModal(), 500);
+            }
+        } catch (error) {
+            console.error('Ошибка рекламы:', error);
+            setAdLoading(false);
+            showToast('Ошибка загрузки рекламы.', 'error');
+        }
     }
 
     // ============ МОДАЛЬНЫЕ ОКНА ============
@@ -845,7 +994,6 @@
             return;
         }
         
-        // Обновляем отображение на формат BASE/QUOTE
         document.getElementById('turboSymbolInput').value = formatSymbolForDisplay(symbol);
         
         selectedPackage = null;
@@ -925,51 +1073,6 @@
 
     function closeGetCreditsModal() {
         document.getElementById('getCreditsModal').classList.remove('active');
-    }
-
-    // ============ РЕКЛАМА ============
-    function watchRewardedAd() {
-        if (adsWatchedToday >= 20) {
-            showToast('Лимит рекламы на сегодня (20)', 'error');
-            return;
-        }
-        
-        showToast('Загрузка рекламы...', 'info');
-        
-        setTimeout(() => {
-            userCredits += 5;
-            adsWatchedToday++;
-            
-            setStorage('credits', userCredits);
-            setStorage('ads_watched_today', adsWatchedToday);
-            
-            updateCreditsDisplay();
-            showToast('+5 кредитов!', 'credits');
-            
-            if (document.getElementById('turboPackageModal').classList.contains('active')) {
-                document.querySelectorAll('#turboPackageModal .package-card[data-package]').forEach(card => {
-                    const minutes = parseInt(card.dataset.package);
-                    if (userCredits >= PACKAGES[minutes].credits) {
-                        card.classList.remove('disabled');
-                    }
-                });
-                updateCreditsDisplay();
-            }
-            
-            if (document.getElementById('getCreditsModal').classList.contains('active')) {
-                updateCreditsDisplay();
-            }
-        }, 3000);
-    }
-
-    function watchAdFromModal() {
-        closeTurboPackageModal();
-        watchRewardedAd();
-        setTimeout(() => {
-            if (!activeSymbol) {
-                showTurboPackageModal();
-            }
-        }, 3500);
     }
 
     // ============ НАВИГАЦИЯ ============
@@ -1388,7 +1491,6 @@
     document.getElementById('turboPackageModal').addEventListener('click', function(e) { if (e.target === this) closeTurboPackageModal(); });
     document.getElementById('getCreditsModal').addEventListener('click', function(e) { if (e.target === this) closeGetCreditsModal(); });
 
-    // Автоформатирование при вводе символа
     document.getElementById('turboSymbolInput').addEventListener('blur', function() {
         const parsed = parseSymbolInput(this.value);
         if (parsed && allPairs.find(p => p.symbol === parsed)) {
@@ -1404,7 +1506,7 @@
         if (realtimeChart) realtimeChart.destroy();
     });
 
-    console.log('✅ CryptoPulse готов');
+    console.log('✅ CryptoPulse с рекламным SDK готов');
     </script>
 </body>
 </html>
