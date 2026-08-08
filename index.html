@@ -787,16 +787,9 @@
             const remainingMs = savedTurbo.endTime - Date.now();
             const remainingMinutes = Math.ceil(remainingMs / 60000);
             const upperSymbol = savedTurbo.symbol.toUpperCase();
-            
-            // Проверяем, что пара существует
-            if (allPairs.find(p => p.symbol === upperSymbol)) {
-                document.getElementById('turboSymbolInput').value = formatSymbolForDisplay(upperSymbol);
-                switchToPair(upperSymbol);
-                startTurboTimer(remainingMinutes);
-            } else {
-                // Если пара не найдена, очищаем сохраненное состояние
-                setStorage('turbo_state', null);
-            }
+            document.getElementById('turboSymbolInput').value = formatSymbolForDisplay(upperSymbol);
+            switchToPair(upperSymbol);
+            startTurboTimer(remainingMinutes);
         }
     });
 
@@ -835,30 +828,10 @@
         document.getElementById('totalCreditsSpent').textContent = totalCreditsSpent;
     }
 
-    // ============ ЗАКРЫТИЕ ВСЕХ СОКЕТОВ ============
-    function closeAllSockets() {
-        if (cryptoSocket) {
-            cryptoSocket.onmessage = null;
-            cryptoSocket.onclose = null;
-            cryptoSocket.onerror = null;
-            cryptoSocket.close();
-            cryptoSocket = null;
-        }
-        if (klineSocket) {
-            klineSocket.onmessage = null;
-            klineSocket.onclose = null;
-            klineSocket.onerror = null;
-            klineSocket.close();
-            klineSocket = null;
-        }
-    }
-
     // ============ МОДАЛЬНЫЕ ОКНА ============
     function showTurboPackageModal() {
-        // Проверяем, не активен ли уже Turbo для другой пары
         if (activeSymbol) {
-            const currentPair = formatSymbolForDisplay(activeSymbol);
-            showToast(`Turbo уже активен для ${currentPair}. Дождитесь окончания.`, 'error');
+            showToast('Turbo уже активен!', 'error');
             return;
         }
         
@@ -926,10 +899,6 @@
         
         let symbol = document.getElementById('turboSymbolInput').value.trim();
         symbol = parseSymbolInput(symbol);
-        
-        // Закрываем старые соединения перед запуском новых
-        closeAllSockets();
-        stopTimers();
         
         switchToPair(symbol);
         startTurboTimer(pkg.minutes);
@@ -1151,28 +1120,18 @@
     // ============ ПЕРЕКЛЮЧЕНИЕ ПАРЫ ============
     function switchToPair(symbol) {
         const normalizedSymbol = symbol.toLowerCase();
-        
-        // Если уже отслеживаем эту же пару, ничего не делаем
         if (activeSymbol === normalizedSymbol) return;
         
-        // Увеличиваем ID соединения, чтобы старые сокеты игнорировались
         socketId++;
         const currentSocketId = socketId;
         
-        // Полностью закрываем старые соединения
-        closeAllSockets();
+        if (cryptoSocket) { cryptoSocket.onmessage = null; cryptoSocket.onclose = null; cryptoSocket.close(); cryptoSocket = null; }
+        if (klineSocket) { klineSocket.onmessage = null; klineSocket.onclose = null; klineSocket.close(); klineSocket = null; }
         
-        // Очищаем график
         chartData = [];
-        if (realtimeChart) { 
-            realtimeChart.destroy(); 
-            realtimeChart = null; 
-        }
+        if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
         
-        // Устанавливаем новый активный символ
         activeSymbol = normalizedSymbol;
-        
-        // Обновляем UI
         document.getElementById('turboSymbolInput').value = formatSymbolForDisplay(symbol);
         document.getElementById('livePrice').textContent = '--';
         document.getElementById('liveChange').textContent = '--';
@@ -1181,297 +1140,111 @@
         document.getElementById('turboLow').textContent = '--';
         document.getElementById('turboVolume').textContent = '--';
         document.getElementById('turboTrades').textContent = '--';
-        document.getElementById('turboTimerInfo').textContent = '';
         
-        // Очищаем canvas графика
-        const canvas = document.getElementById('realtimeChart');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        
-        // Запускаем новые соединения с новым ID
         startTurboWebSocket(symbol, currentSocketId);
         startKlineWebSocket(symbol, currentSocketId);
         
-        // Обновляем UI статус
         updateTurboUIStatus(true);
         document.getElementById('activateTurboBtn').classList.add('hidden');
         document.getElementById('earnCreditsBtn').classList.add('hidden');
-        
-        // Обновляем список пар
         applyCurrentFilters();
     }
 
     function startTurboWebSocket(symbol, connectionId) {
-        const streamName = `${symbol.toLowerCase()}@ticker`;
-        console.log(`[Turbo] Opening ticker stream: ${streamName} (connection: ${connectionId})`);
-        
-        const ws = new WebSocket(`${BINANCE_WS_BASE}/${streamName}`);
+        const ws = new WebSocket(`${BINANCE_WS_BASE}/${symbol.toLowerCase()}@ticker`);
         cryptoSocket = ws;
         
         ws.onopen = () => {
-            // Проверяем, что это все еще актуальное соединение
-            if (connectionId !== socketId) { 
-                console.log(`[Turbo] Closing stale connection ${connectionId}`);
-                ws.close(); 
-                return; 
-            }
-            console.log(`[Turbo] Ticker stream opened for ${symbol}`);
+            if (connectionId !== socketId) { ws.close(); return; }
             showToast(`🚀 Turbo: ${formatSymbolForDisplay(symbol)}`, 'turbo');
         };
         
         ws.onmessage = (event) => {
-            // Игнорируем сообщения от старых соединений
             if (connectionId !== socketId) return;
-            
             try {
                 const data = JSON.parse(event.data);
-                
-                // ПРОВЕРЯЕМ, ЧТО ДАННЫЕ ДЛЯ ТЕКУЩЕЙ АКТИВНОЙ ПАРЫ
                 if (data.s && data.s.toLowerCase() === activeSymbol) {
                     renderTurboUpdate(data);
-                    
-                    // Обновляем кэш цен
                     if (pairPrices[data.s]) {
                         pairPrices[data.s].price = parseFloat(data.c);
                         pairPrices[data.s].change = parseFloat(data.P);
                     }
                 }
-            } catch (e) {
-                console.error('[Turbo] Parse error:', e);
-            }
+            } catch (e) {}
         };
         
-        ws.onerror = (error) => {
-            console.error(`[Turbo] WebSocket error for ${symbol}:`, error);
-        };
-        
-        ws.onclose = (event) => {
-            console.log(`[Turbo] Ticker stream closed for ${symbol} (connection: ${connectionId}), code: ${event.code}`);
-            
-            // Переподключаемся только если это актуальное соединение и Turbo еще активен
+        ws.onclose = () => {
             if (connectionId === socketId && turboEndTime && Date.now() < turboEndTime) {
-                console.log(`[Turbo] Reconnecting in 2s...`);
-                setTimeout(() => { 
-                    if (connectionId === socketId && activeSymbol) {
-                        startTurboWebSocket(activeSymbol.toUpperCase(), connectionId); 
-                    }
-                }, 2000);
+                setTimeout(() => { if (connectionId === socketId) startTurboWebSocket(activeSymbol.toUpperCase(), connectionId); }, 2000);
             }
         };
     }
 
     function startKlineWebSocket(symbol, connectionId) {
-        const streamName = `${symbol.toLowerCase()}@kline_1m`;
-        console.log(`[Turbo] Opening kline stream: ${streamName} (connection: ${connectionId})`);
-        
-        const ws = new WebSocket(`${BINANCE_WS_BASE}/${streamName}`);
+        const ws = new WebSocket(`${BINANCE_WS_BASE}/${symbol.toLowerCase()}@kline_1m`);
         klineSocket = ws;
         
         ws.onopen = () => {
-            if (connectionId !== socketId) { 
-                ws.close(); 
-                return; 
-            }
-            console.log(`[Turbo] Kline stream opened for ${symbol}`);
+            if (connectionId !== socketId) { ws.close(); return; }
             loadHistoricalKlines(symbol, connectionId);
         };
         
         ws.onmessage = (event) => {
-            // Игнорируем сообщения от старых соединений
             if (connectionId !== socketId) return;
-            
             try {
                 const kline = JSON.parse(event.data).k;
-                
-                // Проверяем, что kline для текущей активной пары
-                if (kline.s && kline.s.toLowerCase() === activeSymbol) {
-                    if (kline.x) {
-                        // Свеча закрыта
-                        addChartPoint({ 
-                            time: kline.t, 
-                            open: parseFloat(kline.o), 
-                            high: parseFloat(kline.h), 
-                            low: parseFloat(kline.l), 
-                            close: parseFloat(kline.c) 
-                        });
-                    } else {
-                        // Свеча еще формируется
-                        updateLastChartPoint({ 
-                            time: kline.t, 
-                            close: parseFloat(kline.c), 
-                            high: parseFloat(kline.h), 
-                            low: parseFloat(kline.l) 
-                        });
-                    }
+                if (kline.x) {
+                    addChartPoint({ time: kline.t, open: parseFloat(kline.o), high: parseFloat(kline.h), low: parseFloat(kline.l), close: parseFloat(kline.c) });
+                } else {
+                    updateLastChartPoint({ time: kline.t, close: parseFloat(kline.c), high: parseFloat(kline.h), low: parseFloat(kline.l) });
                 }
-            } catch (e) {
-                console.error('[Turbo] Kline parse error:', e);
-            }
-        };
-        
-        ws.onerror = (error) => {
-            console.error(`[Turbo] Kline WebSocket error for ${symbol}:`, error);
-        };
-        
-        ws.onclose = (event) => {
-            console.log(`[Turbo] Kline stream closed for ${symbol} (connection: ${connectionId}), code: ${event.code}`);
+            } catch (e) {}
         };
     }
 
     async function loadHistoricalKlines(symbol, connectionId) {
         try {
-            console.log(`[Turbo] Loading historical klines for ${symbol}`);
-            const response = await fetch(`${BINANCE_API}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=100`);
-            const klines = await response.json();
-            
-            // Проверяем, что соединение все еще актуально
-            if (connectionId !== socketId) {
-                console.log(`[Turbo] Discarding historical klines for stale connection ${connectionId}`);
-                return;
-            }
-            
-            chartData = klines.map(k => ({ 
-                time: k[0], 
-                open: parseFloat(k[1]), 
-                high: parseFloat(k[2]), 
-                low: parseFloat(k[3]), 
-                close: parseFloat(k[4]) 
-            }));
-            
-            console.log(`[Turbo] Loaded ${chartData.length} historical klines`);
+            const klines = await fetch(`${BINANCE_API}/klines?symbol=${symbol.toUpperCase()}&interval=1m&limit=100`).then(r => r.json());
+            if (connectionId !== socketId) return;
+            chartData = klines.map(k => ({ time: k[0], open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]) }));
             initRealtimeChart();
-        } catch (e) { 
-            console.error('[Turbo] Error loading historical klines:', e);
-            if (connectionId === socketId) { 
-                chartData = []; 
-                initRealtimeChart(); 
-            } 
-        }
+        } catch (e) { if (connectionId === socketId) { chartData = []; initRealtimeChart(); } }
     }
 
-    function addChartPoint(point) { 
-        chartData.push(point); 
-        if (chartData.length > 100) chartData.shift(); 
-        updateChart(); 
-    }
-    
+    function addChartPoint(point) { chartData.push(point); if (chartData.length > 100) chartData.shift(); updateChart(); }
     function updateLastChartPoint(update) {
         if (!chartData.length) return;
         const last = chartData[chartData.length - 1];
-        if (last.time === update.time) { 
-            last.close = update.close; 
-            last.high = Math.max(last.high, update.high || last.high); 
-            last.low = Math.min(last.low, update.low || last.low); 
-        }
+        if (last.time === update.time) { last.close = update.close; last.high = Math.max(last.high, update.high); last.low = Math.min(last.low, update.low); }
         updateChart();
     }
 
     function initRealtimeChart() {
         const canvas = document.getElementById('realtimeChart');
         if (!canvas) return;
-        
-        // Уничтожаем старый график если есть
-        if (realtimeChart) { 
-            realtimeChart.destroy(); 
-            realtimeChart = null; 
-        }
+        if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
         
         const ctx = canvas.getContext('2d');
-        
-        // Если данных нет, показываем пустой график
-        if (!chartData.length) {
-            realtimeChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{ 
-                        data: [], 
-                        borderColor: '#ff6b35', 
-                        backgroundColor: 'rgba(255,107,53,0.1)', 
-                        fill: true, 
-                        tension: 0.4, 
-                        pointRadius: 0, 
-                        borderWidth: 2 
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    animation: { duration: 0 }, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { 
-                        x: { 
-                            grid: { color: '#334155' }, 
-                            ticks: { color: '#94a3b8', maxTicksLimit: 8 } 
-                        }, 
-                        y: { 
-                            grid: { color: '#334155' }, 
-                            ticks: { color: '#94a3b8' } 
-                        } 
-                    } 
-                }
-            });
-            return;
-        }
-        
         realtimeChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })),
-                datasets: [{ 
-                    data: chartData.map(d => d.close), 
-                    borderColor: '#ff6b35', 
-                    backgroundColor: 'rgba(255,107,53,0.1)', 
-                    fill: true, 
-                    tension: 0.4, 
-                    pointRadius: 0, 
-                    borderWidth: 2 
-                }]
+                datasets: [{ data: chartData.map(d => d.close), borderColor: '#ff6b35', backgroundColor: 'rgba(255,107,53,0.1)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 }]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                animation: { duration: 0 }, 
-                plugins: { legend: { display: false } }, 
-                scales: { 
-                    x: { 
-                        grid: { color: '#334155' }, 
-                        ticks: { color: '#94a3b8', maxTicksLimit: 8 } 
-                    }, 
-                    y: { 
-                        grid: { color: '#334155' }, 
-                        ticks: { color: '#94a3b8' } 
-                    } 
-                } 
-            }
+            options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
         });
     }
 
     function updateChart() {
-        if (!realtimeChart) { 
-            initRealtimeChart(); 
-            return; 
-        }
+        if (!realtimeChart) { initRealtimeChart(); return; }
         realtimeChart.data.labels = chartData.map(d => new Date(d.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
         realtimeChart.data.datasets[0].data = chartData.map(d => d.close);
         realtimeChart.update('none');
     }
 
-    function stopTimers() {
-        if (turboTimer) {
-            clearTimeout(turboTimer);
-            turboTimer = null;
-        }
-        if (turboUpdateInterval) {
-            clearInterval(turboUpdateInterval);
-            turboUpdateInterval = null;
-        }
-    }
-
     function startTurboTimer(durationMinutes) {
-        stopTimers();
+        if (turboTimer) clearTimeout(turboTimer);
+        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
         
         turboEndTime = Date.now() + durationMinutes * 60 * 1000;
         
@@ -1498,35 +1271,21 @@
     }
 
     function stopTurboWebSocket() {
-        console.log('[Turbo] Stopping Turbo...');
-        
-        closeAllSockets();
-        stopTimers();
-        
-        // Очищаем график
-        if (realtimeChart) { 
-            realtimeChart.destroy(); 
-            realtimeChart = null; 
-        }
+        if (cryptoSocket) { cryptoSocket.onmessage = null; cryptoSocket.onclose = null; cryptoSocket.close(); cryptoSocket = null; }
+        if (klineSocket) { klineSocket.onmessage = null; klineSocket.onclose = null; klineSocket.close(); klineSocket = null; }
+        if (turboTimer) clearTimeout(turboTimer);
+        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
+        if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
         
         turboEndTime = null;
         activeSymbol = null;
         chartData = [];
         
-        // Очищаем canvas
-        const canvas = document.getElementById('realtimeChart');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        
-        // Обновляем UI
         updateTurboUIStatus(false);
         document.getElementById('activateTurboBtn').classList.remove('hidden');
         document.getElementById('earnCreditsBtn').classList.remove('hidden');
         document.getElementById('livePrice').textContent = '--';
         document.getElementById('liveChange').textContent = '--';
-        document.getElementById('liveChange').className = 'live-change positive';
         document.getElementById('turboTimerInfo').textContent = '';
         document.getElementById('turboHigh').textContent = '--';
         document.getElementById('turboLow').textContent = '--';
@@ -1535,19 +1294,13 @@
         
         setStorage('turbo_state', null);
         applyCurrentFilters();
-        
-        console.log('[Turbo] Turbo stopped');
     }
 
     function renderTurboUpdate(data) {
         const price = parseFloat(data.c);
         const changePercent = parseFloat(data.P);
         const pair = allPairs.find(p => p.symbol === activeSymbol?.toUpperCase());
-        
-        if (!pair) {
-            console.warn(`[Turbo] Pair not found for symbol: ${activeSymbol}`);
-            return;
-        }
+        if (!pair) return;
         
         document.getElementById('livePrice').textContent = `${getPricePrefix(pair.quoteAsset)}${formatPriceForPair(price, pair)}`;
         const changeEl = document.getElementById('liveChange');
@@ -1584,18 +1337,8 @@
     // ============ ИЗБРАННОЕ ============
     function toggleWatchlist(symbol) {
         const index = watchlist.indexOf(symbol);
-        if (index > -1) { 
-            watchlist.splice(index, 1); 
-            showToast(`Удалено: ${formatSymbolForDisplay(symbol)}`, 'success'); 
-        }
-        else { 
-            if (watchlist.length >= 50) { 
-                showToast('Лимит: 50 пар', 'error'); 
-                return; 
-            } 
-            watchlist.push(symbol); 
-            showToast(`Добавлено: ${formatSymbolForDisplay(symbol)} ⭐`, 'success'); 
-        }
+        if (index > -1) { watchlist.splice(index, 1); showToast(`Удалено: ${formatSymbolForDisplay(symbol)}`, 'success'); }
+        else { if (watchlist.length >= 50) { showToast('Лимит: 50 пар', 'error'); return; } watchlist.push(symbol); showToast(`Добавлено: ${formatSymbolForDisplay(symbol)} ⭐`, 'success'); }
         setStorage('watchlist', watchlist);
         updateAllUI();
         applyCurrentFilters();
@@ -1604,22 +1347,12 @@
 
     function clearWatchlist() {
         if (!watchlist.length) return showToast('Избранное пусто', 'error');
-        if (confirm('Удалить все пары?')) { 
-            watchlist = []; 
-            setStorage('watchlist', watchlist); 
-            updateAllUI(); 
-            applyCurrentFilters(); 
-            renderWatchlist(); 
-            showToast('Избранное очищено', 'success'); 
-        }
+        if (confirm('Удалить все пары?')) { watchlist = []; setStorage('watchlist', watchlist); updateAllUI(); applyCurrentFilters(); renderWatchlist(); showToast('Избранное очищено', 'success'); }
     }
 
     function renderWatchlist() {
         const container = document.getElementById('watchlistList');
-        if (!watchlist.length) { 
-            container.innerHTML = '<div class="loading">⭐ Нет отслеживаемых пар</div>'; 
-            return; 
-        }
+        if (!watchlist.length) { container.innerHTML = '<div class="loading">⭐ Нет отслеживаемых пар</div>'; return; }
         
         const pairs = watchlist.map(s => allPairs.find(p => p.symbol === s) || { symbol: s, baseAsset: s, quoteAsset: '?' });
         container.innerHTML = pairs.map(pair => {
@@ -1667,8 +1400,10 @@
     });
 
     window.addEventListener('beforeunload', () => {
-        closeAllSockets();
-        stopTimers();
+        if (cryptoSocket) cryptoSocket.close();
+        if (klineSocket) klineSocket.close();
+        if (turboTimer) clearTimeout(turboTimer);
+        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
         if (realtimeChart) realtimeChart.destroy();
     });
 
