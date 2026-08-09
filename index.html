@@ -13,7 +13,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
-        /* ... весь ваш CSS без изменений ... */
         :root {
             --bg-primary: #0f1419;
             --bg-secondary: #1a2332;
@@ -528,7 +527,6 @@
 </head>
 <body>
     <div id="app">
-        <!-- Весь HTML интерфейса без изменений -->
         <header class="header">
             <div class="header-content">
                 <h1>💎 CryptoPulse</h1>
@@ -634,7 +632,6 @@
         </div>
     </div>
 
-    <!-- Модальные окна без изменений -->
     <div class="modal-overlay" id="turboPackageModal">
         <div class="modal-dialog">
             <h3>🚀 Выберите длительность Turbo</h3>
@@ -712,7 +709,7 @@
     // НАДЁЖНЫЙ СБРОС КЕША TELEGRAM MINI APP
     // ============================================================
     (function() {
-        const BUILD = '2.2'; // <-- МЕНЯЙТЕ ЭТУ ЦИФРУ при каждом обновлении кода
+        const BUILD = '2.3'; // <-- МЕНЯЙТЕ ЭТУ ЦИФРУ при каждом обновлении кода
 
         // Удаляем Service Worker (если вдруг есть)
         if ('serviceWorker' in navigator) {
@@ -727,7 +724,7 @@
 
             // Собираем URL с фиксированным параметром версии
             const url = new URL(window.location.href);
-            url.searchParams.set('v', BUILD);  // например ?v=2.2
+            url.searchParams.set('v', BUILD);  // например ?v=2.3
 
             // Самый надёжный способ в Mini App – использовать Telegram API
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -743,7 +740,6 @@
     })();
     // ============================================================
 
-    // Далее идёт весь ваш оригинальный JavaScript без изменений
     const BINANCE_API = 'https://api.binance.com/api/v3';
     const BINANCE_WS_BASE = 'wss://stream.binance.com:9443/ws';
 
