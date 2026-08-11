@@ -42,7 +42,6 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* весь CSS без изменений */
         .header {
             background: var(--bg-secondary);
             padding: 16px 20px;
@@ -508,7 +507,6 @@
         .toast.error { border-color: var(--danger); background: rgba(239,68,68,0.1); color: var(--danger); }
         .toast.turbo { border-color: var(--turbo); background: rgba(255,107,53,0.1); color: var(--turbo); }
         .toast.credits { border-color: #f59e0b; background: rgba(245,158,11,0.1); color: #f59e0b; }
-        .toast.info { border-color: var(--accent); background: rgba(59,130,246,0.1); color: var(--accent); } /* исправлено */
 
         .hidden { display: none !important; }
         .positive { color: var(--success); }
@@ -528,7 +526,6 @@
 <base target="_blank">
 </head>
 <body>
-    <!-- весь HTML без изменений -->
     <div id="app">
         <header class="header">
             <div class="header-content">
@@ -708,39 +705,6 @@
     <div class="toast" id="toast"></div>
 
     <script>
-    // ============================================================
-    // НАДЁЖНЫЙ СБРОС КЕША TELEGRAM MINI APP (ИСПРАВЛЕНО)
-    // ============================================================
-    (function() {
-        const BUILD = '2.3'; // <-- МЕНЯЙТЕ при обновлении
-
-        // Удаляем Service Worker (если есть)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-        }
-
-        const savedBuild = localStorage.getItem('cp_build');
-        if (savedBuild !== BUILD) {
-            // НЕ сохраняем версию до успешного перехода
-            const url = new URL(window.location.href);
-            // Гарантированно новый URL: удаляем старый v и добавляем новый + метку времени
-            url.searchParams.delete('v');
-            url.searchParams.set('v', BUILD);
-            url.searchParams.set('_t', Date.now());
-
-            if (window.Telegram?.WebApp?.openLink) {
-                window.Telegram.WebApp.openLink(url.toString());
-            } else {
-                window.location.replace(url.toString());
-            }
-            // Останавливаем выполнение старого скрипта
-            throw new Error('Reloading to new version');
-        }
-        // Если версия совпадает — мы на актуальной странице, можно сохранить
-        localStorage.setItem('cp_build', BUILD);
-    })();
-    // ============================================================
-
     const BINANCE_API = 'https://api.binance.com/api/v3';
     const BINANCE_WS_BASE = 'wss://stream.binance.com:9443/ws';
 
@@ -769,7 +733,6 @@
     let turboSessionsCount = 0;
     let totalCreditsSpent = 0;
     let adsWatchedToday = 0;
-    let isAdInProgress = false; // защита от повторного начисления
 
     let watchlist = [];
 
@@ -783,11 +746,6 @@
         'USDT': '💲', 'USDC': '💲', 'BUSD': '💲', 'FDUSD': '💲', 'TUSD': '💲',
         'BTC': '₿', 'ETH': '⟠', 'BNB': '🟡'
     };
-
-    // Экранирование HTML (защита XSS)
-    function escapeHtml(str) {
-        return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
-    }
 
     document.addEventListener('DOMContentLoaded', async () => {
         console.log('CryptoPulse initializing...');
@@ -918,12 +876,6 @@
     function confirmTurboActivation() {
         if (!selectedPackage) return;
 
-        // Защита: не активировать, если уже активен
-        if (turboEndTime && turboEndTime > Date.now()) {
-            showToast('Turbo уже активен', 'error');
-            return;
-        }
-
         const pkg = PACKAGES[selectedPackage];
         if (userCredits < pkg.credits) {
             showToast('Недостаточно кредитов', 'error');
@@ -968,24 +920,18 @@
         document.getElementById('getCreditsModal').classList.remove('active');
     }
 
-    // ============ РЕКЛАМА (исправлен эксплойт) ============
+    // ============ РЕКЛАМА ============
     function watchRewardedAd() {
-        if (isAdInProgress) {
-            showToast('Дождитесь окончания текущей рекламы', 'error');
-            return;
-        }
         if (adsWatchedToday >= 20) {
             showToast('Лимит рекламы на сегодня (20)', 'error');
             return;
         }
 
-        isAdInProgress = true;
         showToast('Загрузка рекламы...', 'info');
 
         setTimeout(() => {
             userCredits += 5;
             adsWatchedToday++;
-            isAdInProgress = false;
 
             setStorage('credits', userCredits);
             setStorage('ads_watched_today', adsWatchedToday);
@@ -993,7 +939,6 @@
             updateCreditsDisplay();
             showToast('+5 кредитов!', 'credits');
 
-            // Обновляем доступность пакетов, если открыта модалка пакетов
             if (document.getElementById('turboPackageModal').classList.contains('active')) {
                 document.querySelectorAll('#turboPackageModal .package-card[data-package]').forEach(card => {
                     const minutes = parseInt(card.dataset.package);
@@ -1049,7 +994,6 @@
             updateAllUI();
         } catch (e) {
             document.getElementById('allPairsList').innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
-            console.error('loadAllPairs error', e);
         }
     }
 
@@ -1069,10 +1013,7 @@
                     };
                 }
             });
-        } catch (e) {
-            console.error('loadAllPrices error', e);
-            showToast('Ошибка загрузки цен', 'error');
-        }
+        } catch (e) {}
     }
 
     function initSearch() {
@@ -1149,22 +1090,17 @@
             const isTracking = activeSymbol === pair.symbol.toLowerCase();
             const changeClass = change >= 0 ? 'positive' : 'negative';
 
-            // Экранируем все данные, вставляемые в HTML
-            const safeBase = escapeHtml(pair.baseAsset);
-            const safeQuote = escapeHtml(pair.quoteAsset);
-            const safeSymbol = escapeHtml(pair.symbol);
-
-            return `<div class="coin-card ${isTracking ? 'tracking' : ''}" onclick="selectPairForTurbo('${safeSymbol}')">
-                <div class="coin-symbol-box">${safeBase}</div>
+            return `<div class="coin-card ${isTracking ? 'tracking' : ''}" onclick="selectPairForTurbo('${pair.symbol}')">
+                <div class="coin-symbol-box">${pair.baseAsset}</div>
                 <div class="coin-info">
-                    <div class="coin-name">${safeBase}/${safeQuote}</div>
-                    <div class="coin-pair">${safeSymbol}</div>
+                    <div class="coin-name">${pair.baseAsset}/${pair.quoteAsset}</div>
+                    <div class="coin-pair">${pair.symbol}</div>
                 </div>
                 <div class="coin-price-section">
                     <div class="coin-price">${getPricePrefix(pair.quoteAsset)}${formatPriceForPair(price, pair)}</div>
                     <div class="coin-change ${changeClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</div>
                 </div>
-                <button style="background:none;border:none;color:${isWatched ? '#f59e0b' : 'var(--text-secondary)'};font-size:20px;cursor:pointer;padding:4px;" onclick="event.stopPropagation();toggleWatchlist('${safeSymbol}')">${isWatched ? '⭐' : '☆'}</button>
+                <button style="background:none;border:none;color:${isWatched ? '#f59e0b' : 'var(--text-secondary)'};font-size:20px;cursor:pointer;padding:4px;" onclick="event.stopPropagation();toggleWatchlist('${pair.symbol}')">${isWatched ? '⭐' : '☆'}</button>
             </div>`;
         }).join('');
 
@@ -1179,6 +1115,7 @@
         socketId++;
         const currentSocketId = socketId;
 
+        // Полная очистка старых сокетов
         if (cryptoSocket) {
             try {
                 cryptoSocket.onmessage = null;
@@ -1219,6 +1156,7 @@
         document.getElementById('earnCreditsBtn').classList.add('hidden');
         applyCurrentFilters();
 
+        // Обновляем сохранённое состояние, если таймер ещё активен
         if (turboEndTime && turboEndTime > Date.now()) {
             setStorage('turbo_state', {
                 symbol: normalizedSymbol,
@@ -1229,10 +1167,6 @@
     }
 
     function startTurboWebSocket(symbol, connectionId) {
-        if (typeof WebSocket === 'undefined') {
-            showToast('WebSocket не поддерживается', 'error');
-            return;
-        }
         const ws = new WebSocket(`${BINANCE_WS_BASE}/${symbol.toLowerCase()}@ticker`);
         cryptoSocket = ws;
 
@@ -1265,10 +1199,6 @@
     }
 
     function startKlineWebSocket(symbol, connectionId) {
-        if (typeof WebSocket === 'undefined') {
-            showToast('WebSocket не поддерживается', 'error');
-            return;
-        }
         const ws = new WebSocket(`${BINANCE_WS_BASE}/${symbol.toLowerCase()}@kline_1m`);
         klineSocket = ws;
 
@@ -1345,9 +1275,6 @@
         turboEndTime = Date.now() + durationMinutes * 60 * 1000;
 
         const updateTimer = () => {
-            // Защита: если турбо уже остановлен, не продолжаем
-            if (!turboEndTime) return;
-
             const remaining = turboEndTime - Date.now();
             if (remaining <= 0) {
                 stopTurboWebSocket();
@@ -1370,9 +1297,6 @@
     }
 
     function stopTurboWebSocket() {
-        // Защита от двойного вызова
-        if (!turboEndTime) return;
-
         if (cryptoSocket) {
             try {
                 cryptoSocket.onmessage = null;
@@ -1391,8 +1315,8 @@
             } catch (e) {}
             klineSocket = null;
         }
-        if (turboTimer) { clearTimeout(turboTimer); turboTimer = null; }
-        if (turboUpdateInterval) { clearInterval(turboUpdateInterval); turboUpdateInterval = null; }
+        if (turboTimer) clearTimeout(turboTimer);
+        if (turboUpdateInterval) clearInterval(turboUpdateInterval);
         if (realtimeChart) { realtimeChart.destroy(); realtimeChart = null; }
 
         turboEndTime = null;
@@ -1449,6 +1373,7 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById('turboTab').classList.add('active');
 
+        // Если Turbo уже активен — просто переключаем пару без модалки
         if (turboEndTime && turboEndTime > Date.now()) {
             switchToPair(symbol);
         } else {
@@ -1459,6 +1384,7 @@
     function initTurboInput() {
         const input = document.getElementById('turboSymbolInput');
 
+        // Enter — переключить пару или открыть модалку
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const symbol = parseSymbolInput(input.value);
@@ -1479,6 +1405,7 @@
             }
         });
 
+        // Blur — форматировать отображение
         input.addEventListener('blur', function() {
             const parsed = parseSymbolInput(this.value);
             if (parsed && allPairs.find(p => p.symbol === parsed)) {
@@ -1513,18 +1440,14 @@
             const price = pd?.price || 0;
             const change = pd?.change || 0;
             const changeClass = change >= 0 ? 'positive' : 'negative';
-            const safeBase = escapeHtml(pair.baseAsset);
-            const safeQuote = escapeHtml(pair.quoteAsset);
-            const safeSymbol = escapeHtml(pair.symbol);
-
-            return `<div class="coin-card" onclick="selectPairForTurbo('${safeSymbol}')">
-                <div class="coin-symbol-box">${safeBase}</div>
-                <div class="coin-info"><div class="coin-name">${safeBase}/${safeQuote}</div><div class="coin-pair">${safeSymbol}</div></div>
+            return `<div class="coin-card" onclick="selectPairForTurbo('${pair.symbol}')">
+                <div class="coin-symbol-box">${pair.baseAsset}</div>
+                <div class="coin-info"><div class="coin-name">${pair.baseAsset}/${pair.quoteAsset}</div><div class="coin-pair">${pair.symbol}</div></div>
                 <div class="coin-price-section">
                     <div class="coin-price">${getPricePrefix(pair.quoteAsset)}${formatPriceForPair(price, pair)}</div>
                     <div class="coin-change ${changeClass}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</div>
                 </div>
-                <button style="background:none;border:none;color:#f59e0b;font-size:20px;cursor:pointer;" onclick="event.stopPropagation();toggleWatchlist('${safeSymbol}')">⭐</button>
+                <button style="background:none;border:none;color:#f59e0b;font-size:20px;cursor:pointer;" onclick="event.stopPropagation();toggleWatchlist('${pair.symbol}')">⭐</button>
             </div>`;
         }).join('');
     }
